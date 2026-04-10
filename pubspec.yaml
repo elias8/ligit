@@ -1,0 +1,21 @@
+name: libgit2_workspace
+repository: https://github.com/elias8/libgit2
+
+environment:
+  sdk: ^3.11.0
+
+workspace:
+  - packages/libgit2
+
+hooks:
+  user_defines:
+    libgit2:
+      # How to obtain the native library binary.
+      # - `prebuilt`: Download a pre-built binary from GitHub Releases
+      # - `compile`:  Build from source using CMake
+      # - `system`:   Use an OS-installed libgit2 (LIBGIT2_LIB env override)
+      source: system
+      # How to download source code when source=compile.
+      # - `tarball` (default): Download tarball from GitHub Releases
+      # - `git`: Clone from GitHub
+      download: tarball

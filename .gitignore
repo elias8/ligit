@@ -1,0 +1,20 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+pubspec.lock
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local libgit2 C source checkout for development (override via LIBGIT2_SRC).
+# Anchored to the workspace root so it does not match `packages/libgit2/`.
+/libgit2/

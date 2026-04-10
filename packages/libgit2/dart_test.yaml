@@ -1,0 +1,8 @@
+# libgit2's global init/shutdown counter is process-wide, so every ffi
+# test file must have exclusive access to it. Serializing the runner
+# gives each file its own turn with the native library.
+concurrency: 1
+
+tags:
+  ffi:
+    test_on: vm
