@@ -13,6 +13,7 @@ import 'package:meta/meta.dart';
 
 import '../bindings/annotated_commit.dart';
 import '../bindings/blob.dart';
+import '../bindings/branch.dart';
 import '../bindings/cert.dart';
 import '../bindings/commit.dart';
 import '../bindings/common.dart';
@@ -80,6 +81,7 @@ export '../ffi/libgit2_enums.g.dart'
 
 part 'annotated_commit.dart';
 part 'blob.dart';
+part 'branch.dart';
 part 'cert.dart';
 part 'commit.dart';
 part 'config.dart';
