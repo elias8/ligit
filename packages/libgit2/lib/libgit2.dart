@@ -119,6 +119,7 @@ export 'src/impl/api.dart'
         OdbWriteStream,
         Oid,
         OidShortener,
+        PackBuilder,
         PackbuilderStage,
         Patch,
         Pathspec,
