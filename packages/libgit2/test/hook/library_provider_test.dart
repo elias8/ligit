@@ -27,10 +27,10 @@ void main() {
     BuildInput inputWith(Map<String, Object?> userDefines) =>
         createTestBuildInput(userDefines: userDefines);
 
-    test('defaults to DownloadPrebuilt when no source user-define is set', () {
+    test('defaults to CompileFromSource when no source user-define is set', () {
       expect(
         LibraryProvider.resolve(createTestBuildInput()),
-        isA<DownloadPrebuilt>(),
+        isA<CompileFromSource>(),
       );
     });
 
@@ -179,10 +179,13 @@ void main() {
         addTearDown(() => tmp.deleteSync(recursive: true));
 
         // Supply an existing source dir so _resolveSource succeeds and the
-        // cross-compile guard in _compile is reached.
+        // cross-compile guard in _compile is reached. Pick any OS that is
+        // not the host so the guard fires regardless of which runner this
+        // test executes on.
         final fakeSource = Directory('${tmp.path}/src')..createSync();
+        final crossOs = OS.current == OS.iOS ? OS.android : OS.iOS;
         final provider = CompileFromSource(
-          createTestBuildInput(os: OS.linux),
+          createTestBuildInput(os: crossOs),
           sourcePath: fakeSource.path,
         );
         await expectLater(

@@ -11,11 +11,11 @@ hooks:
   user_defines:
     libgit2:
       # How to obtain the native library binary.
-      # - `prebuilt`: Download a pre-built binary from GitHub Releases
-      # - `compile`:  Build from source using CMake
-      # - `system`:   Use an OS-installed libgit2 (LIBGIT2_LIB env override)
-      source: system
+      # - `compile` (default): Build from source using CMake
+      # - `prebuilt`:          Download a pre-built binary from GitHub Releases
+      # - `system`:            Use an OS-installed libgit2 (LIBGIT2_LIB override)
+      source: compile
       # How to download source code when source=compile.
       # - `tarball` (default): Download tarball from GitHub Releases
-      # - `git`: Clone from GitHub
+      # - `git`:               Clone from GitHub
       download: tarball

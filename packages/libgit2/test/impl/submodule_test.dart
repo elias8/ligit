@@ -41,7 +41,7 @@ void main() {
 
         expect(sm.name, 'vendor/lib');
         expect(sm.path, 'vendor/lib');
-        expect(sm.url, 'file://${subFixture.path}');
+        expect(sm.url, subFixture.fileUrl);
       });
 
       test('throws NotFoundException for a missing submodule', () {
@@ -223,7 +223,7 @@ void _addSubmodule(String superDir, String subDir, String path) {
     superDir,
     'submodule',
     'add',
-    'file://$subDir',
+    fileUrl(subDir),
     path,
   ]);
   if (r.exitCode != 0) {

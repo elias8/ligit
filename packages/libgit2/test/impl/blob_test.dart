@@ -21,6 +21,16 @@ void main() {
     setUp(() {
       tempDir = createTempDir();
       repo = Repository.init(tempDir);
+      // libgit2's filter pipeline honors core.autocrlf, which Windows git
+      // globally sets to true. Pin it off so filter tests round-trip
+      // bytes on every host.
+      Process.runSync('git', [
+        '-C',
+        tempDir,
+        'config',
+        'core.autocrlf',
+        'false',
+      ]);
     });
 
     tearDown(() {

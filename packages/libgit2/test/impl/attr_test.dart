@@ -7,13 +7,12 @@ import 'package:test/test.dart';
 import 'helpers/git_fixture.dart';
 
 void main() {
+  setUpAll(Libgit2.init);
+  tearDownAll(Libgit2.shutdown);
+
   group('RepositoryAttr', () {
     late GitFixture git;
     late Repository repo;
-
-    setUpAll(Libgit2.init);
-
-    tearDownAll(Libgit2.shutdown);
 
     setUp(() {
       git = GitFixture.init();

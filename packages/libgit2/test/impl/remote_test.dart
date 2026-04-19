@@ -38,12 +38,12 @@ void main() {
         final remote = Remote.create(
           repo: repo,
           name: 'origin',
-          url: 'file://${upstream.path}',
+          url: upstream.fileUrl,
         );
         addTearDown(remote.dispose);
 
         expect(remote.name, 'origin');
-        expect(remote.url, 'file://${upstream.path}');
+        expect(remote.url, upstream.fileUrl);
         expect(remote.fetchRefspecs, ['+refs/heads/*:refs/remotes/origin/*']);
       });
     });
@@ -53,7 +53,7 @@ void main() {
         Remote.create(
           repo: repo,
           name: 'upstream',
-          url: 'file://${upstream.path}',
+          url: upstream.fileUrl,
         ).dispose();
 
         final remote = Remote.lookup(repo, 'upstream');
@@ -75,7 +75,7 @@ void main() {
         final remote = Remote.create(
           repo: repo,
           name: 'origin',
-          url: 'file://${upstream.path}',
+          url: upstream.fileUrl,
         );
         addTearDown(remote.dispose);
 
@@ -91,7 +91,7 @@ void main() {
         final remote = Remote.create(
           repo: repo,
           name: 'origin',
-          url: 'file://${upstream.path}',
+          url: upstream.fileUrl,
         );
         addTearDown(remote.dispose);
 
@@ -114,7 +114,7 @@ void main() {
         final remote = Remote.create(
           repo: repo,
           name: 'origin',
-          url: 'file://${upstream.path}',
+          url: upstream.fileUrl,
         );
         addTearDown(remote.dispose);
 
@@ -137,7 +137,7 @@ void main() {
           final remote = Remote.create(
             repo: repo,
             name: 'origin',
-            url: 'file://${upstream.path}',
+            url: upstream.fileUrl,
           );
           addTearDown(remote.dispose);
 
@@ -163,7 +163,7 @@ void main() {
         final remote = Remote.create(
           repo: repo,
           name: 'origin',
-          url: 'file://${upstream.path}',
+          url: upstream.fileUrl,
         );
         addTearDown(remote.dispose);
 
@@ -174,7 +174,7 @@ void main() {
 
     group('stop', () {
       test('can be called after connect without crashing', () {
-        final remote = Remote.createAnonymous(repo, 'file://${upstream.path}');
+        final remote = Remote.createAnonymous(repo, upstream.fileUrl);
         addTearDown(remote.dispose);
 
         remote.connect(Direction.fetch);
@@ -192,7 +192,7 @@ void main() {
         final remote = Remote.create(
           repo: repo,
           name: 'bare',
-          url: 'file://$bareDir',
+          url: fileUrl(bareDir),
         );
         addTearDown(remote.dispose);
 
@@ -218,7 +218,7 @@ void main() {
         final remote = Remote.create(
           repo: repo,
           name: 'bare',
-          url: 'file://$bareDir',
+          url: fileUrl(bareDir),
         );
         addTearDown(remote.dispose);
 
@@ -237,7 +237,7 @@ void main() {
         final remote = Remote.create(
           repo: repo,
           name: 'origin',
-          url: 'file://${upstream.path}',
+          url: upstream.fileUrl,
         );
         addTearDown(remote.dispose);
 
@@ -253,7 +253,7 @@ void main() {
         final remote = Remote.create(
           repo: repo,
           name: 'origin',
-          url: 'file://${upstream.path}',
+          url: upstream.fileUrl,
         );
         addTearDown(remote.dispose);
 
@@ -274,7 +274,7 @@ void main() {
         final remote = Remote.create(
           repo: repo,
           name: 'origin',
-          url: 'file://${upstream.path}',
+          url: upstream.fileUrl,
         );
         addTearDown(remote.dispose);
         remote.fetch();
@@ -301,7 +301,7 @@ void main() {
         final remote = Remote.create(
           repo: repo,
           name: 'origin',
-          url: 'file://${upstream.path}',
+          url: upstream.fileUrl,
         );
         addTearDown(remote.dispose);
 
@@ -394,7 +394,7 @@ void main() {
 
     group('connect / ls', () {
       test('lists refs advertised by the upstream', () {
-        final remote = Remote.createAnonymous(repo, 'file://${upstream.path}');
+        final remote = Remote.createAnonymous(repo, upstream.fileUrl);
         addTearDown(remote.dispose);
 
         remote.connect(Direction.fetch);
@@ -435,12 +435,12 @@ void main() {
         Remote.create(
           repo: repo,
           name: 'origin',
-          url: 'file://${upstream.path}',
+          url: upstream.fileUrl,
         ).dispose();
         Remote.create(
           repo: repo,
           name: 'other',
-          url: 'file://${upstream.path}',
+          url: upstream.fileUrl,
         ).dispose();
 
         expect(repo.remoteNames(), containsAll(['origin', 'other']));
@@ -458,7 +458,7 @@ void main() {
         Remote.create(
           repo: repo,
           name: 'origin',
-          url: 'file://${upstream.path}',
+          url: upstream.fileUrl,
         ).dispose();
 
         repo.addRemoteFetch('origin', '+refs/tags/*:refs/tags/*');
@@ -533,7 +533,7 @@ String _initBare(String bareDir, String sourceDir) {
     sourceDir,
     'push',
     '--mirror',
-    'file://$bareDir',
+    fileUrl(bareDir),
   ]);
   return bareDir;
 }

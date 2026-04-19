@@ -1,0 +1,140 @@
+name: checks
+
+on:
+  workflow_call:
+
+jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    outputs:
+      libgit2: ${{ steps.filter.outputs.libgit2 }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter
+        with:
+          filters: |
+            libgit2:
+              - 'packages/libgit2/**'
+              - '!packages/libgit2/**/*.md'
+              - 'pubspec.yaml'
+              - '.github/workflows/checks.yml'
+              - '.github/workflows/pr-check.yml'
+              - '.github/workflows/ci.yml'
+
+  analyze:
+    name: analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260 # v1.7.2
+        with:
+          sdk: stable
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+      - name: check libgit2 tag exists
+        run: |
+          TAG=$(cat packages/libgit2/libgit2.version)
+          curl -fsSL -o /dev/null "https://github.com/libgit2/libgit2/archive/refs/tags/$TAG.tar.gz"
+      - run: dart pub get
+      - run: dart format --set-exit-if-changed .
+      - run: dart analyze .
+      - name: publish dry run libgit2
+        working-directory: packages/libgit2
+        run: dart pub publish --dry-run
+
+  test-libgit2:
+    name: test-libgit2-${{ matrix.os }}
+    needs: [analyze, changes]
+    if: needs.changes.outputs.libgit2 == 'true'
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-arm64
+            runner: macos-latest
+          - os: linux-x64
+            runner: ubuntu-latest
+          - os: windows-x64
+            runner: windows-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-tags: false
+      - uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260 # v1.7.2
+        with:
+          sdk: stable
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+      - name: install native deps (linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev libssh2-1-dev
+      - name: install native deps (macos)
+        if: runner.os == 'macOS'
+        run: brew install libssh2
+      - name: cache vcpkg libssh2 (windows)
+        if: runner.os == 'Windows'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: C:\vcpkg\installed
+          key: vcpkg-windows-libssh2-v1
+          save-always: true
+      - name: install native deps (windows)
+        if: runner.os == 'Windows'
+        run: |
+          vcpkg install libssh2:x64-windows
+          echo "$VCPKG_INSTALLATION_ROOT/installed/x64-windows/bin" >> "$GITHUB_PATH"
+      - name: resolve libgit2 tag
+        id: libgit2
+        run: |
+          TAG=$(cat packages/libgit2/libgit2.version)
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - name: set windows cmake toolchain
+        if: runner.os == 'Windows'
+        run: |
+          TOOLCHAIN="${VCPKG_INSTALLATION_ROOT//\\//}/scripts/buildsystems/vcpkg.cmake"
+          perl -i -pe "s|source: compile|source: compile\n      cmake_toolchain_file: '$TOOLCHAIN'|" pubspec.yaml
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            .dart_tool/hook_builds
+            .dart_tool/hook_builds_shared
+          key: hooks-${{ matrix.os }}-${{ steps.libgit2.outputs.tag }}-${{ hashFiles('packages/libgit2/hook/**', 'packages/libgit2/lib/src/hook/**') }}
+          save-always: true
+      - run: dart pub get
+      - name: run tests
+        working-directory: packages/libgit2
+        run: dart test
+
+  # Single required status that aggregates every conditional job above.
+  # Branch protection requires only this context, which lets the matrix
+  # and path-filtered jobs skip without blocking merges. Fails if any
+  # dependency failed or was cancelled; succeeds when they all passed
+  # or were skipped by `needs.changes`.
+  checks-passed:
+    name: checks-passed
+    if: always()
+    needs:
+      - analyze
+      - test-libgit2
+    runs-on: ubuntu-latest
+    steps:
+      - name: verify required checks
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "One or more required checks failed or were cancelled."
+            exit 1
+          fi

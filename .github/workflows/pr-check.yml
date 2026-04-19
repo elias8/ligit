@@ -1,0 +1,23 @@
+name: pr-check
+run-name: pr-check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/pr-check.yml'
+      - '.github/workflows/checks.yml'
+      - '.github/workflows/ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml

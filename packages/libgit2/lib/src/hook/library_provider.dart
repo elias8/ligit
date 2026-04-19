@@ -38,20 +38,23 @@ sealed class LibraryProvider {
   /// Selects the provider based on user-defined hook options.
   ///
   /// Source values:
-  /// - `"prebuilt"` (default): downloads a prebuilt binary from GitHub
-  ///   Releases.
-  /// - `"compile"`: builds the library from source using CMake. The source
-  ///   may be supplied via the `LIBGIT2_SRC` environment variable, otherwise
-  ///   it is downloaded based on the `download` user-define.
+  /// - `"compile"` (default): builds the library from source using CMake.
+  ///   The source may be supplied via the `LIBGIT2_SRC` environment
+  ///   variable, otherwise it is downloaded based on the `download`
+  ///   user-define. On Windows with vcpkg-installed dependencies, set the
+  ///   `cmake_toolchain_file` user-define to vcpkg's toolchain file path.
+  /// - `"prebuilt"`: downloads a prebuilt binary from GitHub Releases.
   /// - `"system"`: uses an OS-installed libgit2. Looks at `LIBGIT2_LIB`
   ///   first, then a small set of well-known directories.
   static LibraryProvider resolve(BuildInput input) {
     final source = input.userDefines['source'];
 
     return switch (source) {
-      'compile' => CompileFromSource(
+      'compile' || null => CompileFromSource(
         input,
         sourcePath: Platform.environment[libgit2SrcEnvKey],
+        cmakeToolchainFile:
+            input.userDefines['cmake_toolchain_file'] as String?,
         downloadMethod: switch (input.userDefines['download']) {
           'git' => SourceLocation.git,
           'tarball' || null => SourceLocation.tarball,
@@ -65,10 +68,10 @@ sealed class LibraryProvider {
         input,
         explicitPath: Platform.environment[libgit2LibEnvKey],
       ),
-      'prebuilt' || null => DownloadPrebuilt(input),
+      'prebuilt' => DownloadPrebuilt(input),
       _ => throw ArgumentError(
         'Invalid source: $source. '
-        'Valid options are "prebuilt", "compile", or "system".',
+        'Valid options are "compile", "prebuilt", or "system".',
       ),
     };
   }
@@ -96,11 +99,13 @@ enum SourceLocation {
 final class CompileFromSource extends LibraryProvider {
   final BuildInput input;
   final String? sourcePath;
+  final String? cmakeToolchainFile;
   final SourceLocation downloadMethod;
 
   const CompileFromSource(
     this.input, {
     this.sourcePath,
+    this.cmakeToolchainFile,
     this.downloadMethod = SourceLocation.tarball,
   });
 
@@ -135,7 +140,7 @@ final class CompileFromSource extends LibraryProvider {
     if (buildDir.existsSync()) buildDir.deleteSync(recursive: true);
     buildDir.createSync(recursive: true);
 
-    final configure = Process.runSync('cmake', [
+    final cmakeArgs = <String>[
       '-S',
       sourceDir.path,
       '-B',
@@ -144,15 +149,27 @@ final class CompileFromSource extends LibraryProvider {
       '-DBUILD_SHARED_LIBS=ON',
       '-DBUILD_TESTS=OFF',
       '-DBUILD_CLI=OFF',
-      '-DUSE_SSH=OFF',
-      '-DUSE_HTTPS=OFF',
+      '-DUSE_HTTPS=ON',
+      '-DUSE_SSH=libssh2',
       '-DCMAKE_INSTALL_PREFIX=${installDir.path}',
-    ]);
+    ];
+
+    if (cmakeToolchainFile != null && cmakeToolchainFile!.isNotEmpty) {
+      cmakeArgs.add('-DCMAKE_TOOLCHAIN_FILE=$cmakeToolchainFile');
+    }
+
+    final configure = Process.runSync('cmake', cmakeArgs);
     if (configure.exitCode != 0) {
       throw Exception(
         'cmake configure failed (exit ${configure.exitCode}):\n'
         'stdout: ${configure.stdout}\n'
-        'stderr: ${configure.stderr}',
+        'stderr: ${configure.stderr}\n\n'
+        'libgit2 requires HTTPS and SSH dependencies. Install:\n'
+        '  Linux:   sudo apt install libssl-dev libssh2-1-dev\n'
+        '  macOS:   brew install libssh2\n'
+        '  Windows: vcpkg install libssh2:x64-windows, then set the\n'
+        '           cmake_toolchain_file user_define in pubspec.yaml to\n'
+        '           <vcpkg>/scripts/buildsystems/vcpkg.cmake',
       );
     }
 

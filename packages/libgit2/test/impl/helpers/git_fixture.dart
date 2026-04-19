@@ -17,6 +17,12 @@ void deleteTempDir(String path) {
   }
 }
 
+/// Returns a `file://` URL for a local [path] that libgit2 accepts on every
+/// platform. Raw `'file://<path>'` interpolation produces a broken URL on
+/// Windows (backslashes + missing third slash before the drive letter);
+/// [Uri.file] normalizes to the cross-platform form.
+String fileUrl(String path) => Uri.file(path).toString();
+
 /// Temporary git repository seeded with the system `git` CLI.
 ///
 /// Owns a unique temp directory and tears it down on [dispose]. The
@@ -33,12 +39,19 @@ class GitFixture {
   /// Absolute path to the worktree root.
   final String path;
 
+  /// `file://` URL for this repo, usable as a libgit2 remote URL.
+  String get fileUrl => Uri.file(path).toString();
+
   /// Creates a new repository on the default branch [branch].
   factory GitFixture.init({String branch = 'main'}) {
     final dir = Directory.systemTemp.createTempSync('libgit2_test_').path;
     _run(['init', '-b', branch, dir]);
     _run(['-C', dir, 'config', 'user.name', 'Test']);
     _run(['-C', dir, 'config', 'user.email', 'test@example.com']);
+    // Default Windows git has core.autocrlf=true, which libgit2 inherits
+    // and applies on filter/checkout. Force LF everywhere so fixture
+    // content round-trips byte-identical on every host.
+    _run(['-C', dir, 'config', 'core.autocrlf', 'false']);
     return GitFixture._(dir);
   }
 

@@ -1,0 +1,21 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/checks.yml'
+
+concurrency:
+  group: ci-libgit2
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml
