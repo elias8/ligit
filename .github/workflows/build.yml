@@ -49,12 +49,45 @@ jobs:
             ext: dylib
             osx_arch: x86_64
             vcpkg_triplet: x64-osx
+          - target: aarch64-ios
+            runner: macos-latest
+            ext: dylib
+            osx_arch: arm64
+            ios_sysroot: iphoneos
+            vcpkg_triplet: arm64-ios
+          - target: aarch64-ios-simulator
+            runner: macos-latest
+            ext: dylib
+            osx_arch: arm64
+            ios_sysroot: iphonesimulator
+            vcpkg_triplet: arm64-ios-simulator
+          - target: x86_64-ios-simulator
+            runner: macos-latest
+            ext: dylib
+            osx_arch: x86_64
+            ios_sysroot: iphonesimulator
+            vcpkg_triplet: x64-ios-simulator
           - target: x86_64-linux
             runner: ubuntu-latest
             ext: so
           - target: aarch64-linux
             runner: ubuntu-24.04-arm
             ext: so
+          - target: aarch64-linux-android
+            runner: ubuntu-latest
+            ext: so
+            android_abi: arm64-v8a
+            vcpkg_triplet: arm64-android
+          - target: x86_64-linux-android
+            runner: ubuntu-latest
+            ext: so
+            android_abi: x86_64
+            vcpkg_triplet: x64-android
+          - target: arm-linux-androideabi
+            runner: ubuntu-latest
+            ext: so
+            android_abi: armeabi-v7a
+            vcpkg_triplet: arm-neon-android
           - target: x86_64-windows
             runner: windows-latest
             ext: dll
@@ -78,7 +111,7 @@ jobs:
           tar xzf libgit2.tar.gz -C libgit2-src --strip-components=1 --exclude='*/tests/resources/*'
           rm libgit2.tar.gz
       - name: install native deps (linux)
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && matrix.android_abi == ''
         run: |
           sudo apt-get update
           sudo apt-get install -y libssl-dev libssh2-1-dev
@@ -91,6 +124,17 @@ jobs:
       - name: install native deps (macos)
         if: runner.os == 'macOS'
         run: |
+          "$VCPKG_INSTALLATION_ROOT/vcpkg" install libssh2:${{ matrix.vcpkg_triplet }}
+      - name: cache vcpkg libssh2 (android)
+        if: runner.os == 'Linux' && matrix.android_abi != ''
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: /usr/local/share/vcpkg/installed
+          key: vcpkg-android-${{ matrix.vcpkg_triplet }}-libssh2-v1
+      - name: install native deps (android)
+        if: runner.os == 'Linux' && matrix.android_abi != ''
+        run: |
+          export ANDROID_NDK_HOME="$ANDROID_NDK_ROOT"
           "$VCPKG_INSTALLATION_ROOT/vcpkg" install libssh2:${{ matrix.vcpkg_triplet }}
       - name: cache vcpkg libssh2 (windows)
         if: runner.os == 'Windows'
@@ -117,6 +161,27 @@ jobs:
                 "-DVCPKG_TARGET_TRIPLET=${{ matrix.vcpkg_triplet }}"
                 "-DCMAKE_OSX_ARCHITECTURES=${{ matrix.osx_arch }}"
               )
+              if [ -n "${{ matrix.ios_sysroot }}" ]; then
+                EXTRA_ARGS+=(
+                  "-DCMAKE_SYSTEM_NAME=iOS"
+                  "-DCMAKE_OSX_SYSROOT=${{ matrix.ios_sysroot }}"
+                  "-DCMAKE_OSX_DEPLOYMENT_TARGET=13.0"
+                )
+              fi
+              ;;
+            Linux)
+              if [ -n "${{ matrix.android_abi }}" ]; then
+                export ANDROID_NDK_HOME="$ANDROID_NDK_ROOT"
+                TOOLCHAIN="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+                NDK_TOOLCHAIN="$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake"
+                EXTRA_ARGS+=(
+                  "-DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN"
+                  "-DVCPKG_TARGET_TRIPLET=${{ matrix.vcpkg_triplet }}"
+                  "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$NDK_TOOLCHAIN"
+                  "-DANDROID_ABI=${{ matrix.android_abi }}"
+                  "-DANDROID_PLATFORM=android-21"
+                )
+              fi
               ;;
           esac
           cmake -S libgit2-src -B build \
@@ -166,6 +231,10 @@ jobs:
       - uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260 # v1.7.2
         with:
           sdk: stable
+      - name: install native deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev libssh2-1-dev
       - name: generate asset hashes
         working-directory: packages/libgit2_dart
         run: |
