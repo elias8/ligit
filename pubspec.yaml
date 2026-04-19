@@ -5,11 +5,11 @@ environment:
   sdk: ^3.11.0
 
 workspace:
-  - packages/libgit2
+  - packages/libgit2_dart
 
 hooks:
   user_defines:
-    libgit2:
+    libgit2_dart:
       # How to obtain the native library binary.
       # - `compile` (default): Build from source using CMake
       # - `prebuilt`:          Download a pre-built binary from GitHub Releases
