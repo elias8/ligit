@@ -27,10 +27,10 @@ void main() {
     BuildInput inputWith(Map<String, Object?> userDefines) =>
         createTestBuildInput(userDefines: userDefines);
 
-    test('defaults to CompileFromSource when no source user-define is set', () {
+    test('defaults to DownloadPrebuilt when no source user-define is set', () {
       expect(
         LibraryProvider.resolve(createTestBuildInput()),
-        isA<CompileFromSource>(),
+        isA<DownloadPrebuilt>(),
       );
     });
 

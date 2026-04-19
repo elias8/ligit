@@ -68,10 +68,10 @@ void main() {
 
 ## Development
 
-When working on the package itself, we can override how libgit2 is acquired with
-the `source` user-define: `prebuilt` (default, downloads a verified binary from 
-releases), `compile` (builds from source with CMake), or `system` (uses the 
-OS installed libgit2; dev only).
+By default the build hook downloads a SHA256 verified prebuilt binary from
+this repo's GitHub releases. When working on the package itself, override
+the `source` user-define: `compile` builds from source with CMake; `system`
+uses the OS installed libgit2.
 
 ```yaml
 hooks:
