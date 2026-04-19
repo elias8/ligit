@@ -38,19 +38,21 @@ sealed class LibraryProvider {
   /// Selects the provider based on user-defined hook options.
   ///
   /// Source values:
-  /// - `"compile"` (default): builds the library from source using CMake.
-  ///   The source may be supplied via the `LIBGIT2_SRC` environment
-  ///   variable, otherwise it is downloaded based on the `download`
-  ///   user-define. On Windows with vcpkg-installed dependencies, set the
+  /// - `"prebuilt"` (default): downloads a prebuilt binary from GitHub
+  ///   Releases and verifies its SHA-256.
+  /// - `"compile"`: builds the library from source using CMake. The source
+  ///   may be supplied via the `LIBGIT2_SRC` environment variable,
+  ///   otherwise it is downloaded based on the `download` user-define. On
+  ///   Windows with vcpkg-installed dependencies, set the
   ///   `cmake_toolchain_file` user-define to vcpkg's toolchain file path.
-  /// - `"prebuilt"`: downloads a prebuilt binary from GitHub Releases.
   /// - `"system"`: uses an OS-installed libgit2. Looks at `LIBGIT2_LIB`
   ///   first, then a small set of well-known directories.
   static LibraryProvider resolve(BuildInput input) {
     final source = input.userDefines['source'];
 
     return switch (source) {
-      'compile' || null => CompileFromSource(
+      'prebuilt' || null => DownloadPrebuilt(input),
+      'compile' => CompileFromSource(
         input,
         sourcePath: Platform.environment[libgit2SrcEnvKey],
         cmakeToolchainFile:
@@ -68,10 +70,9 @@ sealed class LibraryProvider {
         input,
         explicitPath: Platform.environment[libgit2LibEnvKey],
       ),
-      'prebuilt' => DownloadPrebuilt(input),
       _ => throw ArgumentError(
         'Invalid source: $source. '
-        'Valid options are "compile", "prebuilt", or "system".',
+        'Valid options are "prebuilt", "compile", or "system".',
       ),
     };
   }

@@ -1,0 +1,157 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/libgit2_dart/**'
+      - '!packages/libgit2_dart/lib/src/hook/asset_hashes.dart'
+      - '.github/workflows/build.yml'
+      - '.github/workflows/checks.yml'
+
+concurrency:
+  group: build-libgit2_dart
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: check libgit2 tag exists
+        run: |
+          TAG=$(cat packages/libgit2_dart/libgit2.version)
+          curl -fsSL -o /dev/null "https://github.com/libgit2/libgit2/archive/refs/tags/${TAG}.tar.gz"
+
+  checks:
+    needs: [validate]
+    uses: ./.github/workflows/checks.yml
+
+  build-native:
+    name: build-${{ matrix.target }}
+    needs: [checks]
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-macos
+            runner: macos-latest
+            ext: dylib
+          - target: x86_64-macos
+            runner: macos-13
+            ext: dylib
+          - target: x86_64-linux
+            runner: ubuntu-latest
+            ext: so
+          - target: aarch64-linux
+            runner: ubuntu-24.04-arm
+            ext: so
+          - target: x86_64-windows
+            runner: windows-latest
+            ext: dll
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: resolve libgit2 tag
+        id: libgit2
+        run: |
+          TAG=$(cat packages/libgit2_dart/libgit2.version)
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        id: libgit2-cache
+        with:
+          path: libgit2-src
+          key: libgit2-src-${{ steps.libgit2.outputs.tag }}
+      - name: download libgit2 source
+        if: steps.libgit2-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL "https://github.com/libgit2/libgit2/archive/refs/tags/${{ steps.libgit2.outputs.tag }}.tar.gz" -o libgit2.tar.gz
+          mkdir -p libgit2-src
+          tar xzf libgit2.tar.gz -C libgit2-src --strip-components=1
+          rm libgit2.tar.gz
+      - name: install native deps (linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev libssh2-1-dev
+      - name: install native deps (macos)
+        if: runner.os == 'macOS'
+        run: brew install libssh2
+      - name: cache vcpkg libssh2 (windows)
+        if: runner.os == 'Windows'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: C:\vcpkg\installed
+          key: vcpkg-windows-libssh2-v1
+          save-always: true
+      - name: install native deps (windows)
+        if: runner.os == 'Windows'
+        run: vcpkg install libssh2:x64-windows
+      - name: configure
+        run: |
+          EXTRA_ARGS=()
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            TOOLCHAIN="${VCPKG_INSTALLATION_ROOT//\\//}/scripts/buildsystems/vcpkg.cmake"
+            EXTRA_ARGS+=("-DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN")
+          fi
+          cmake -S libgit2-src -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=ON \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_CLI=OFF \
+            -DUSE_HTTPS=ON \
+            -DUSE_SSH=libssh2 \
+            -DCMAKE_INSTALL_PREFIX="$PWD/install" \
+            "${EXTRA_ARGS[@]}"
+      - name: build
+        run: cmake --build build --target install --config Release --parallel
+      - name: prepare artifact
+        id: artifact
+        run: |
+          FILENAME="libgit2-${{ matrix.target }}.${{ matrix.ext }}"
+          case "$RUNNER_OS" in
+            Windows)
+              cp install/bin/git2.dll "$FILENAME"
+              ;;
+            macOS)
+              # Copy the plain symlink target to dereference version symlinks.
+              cp -L install/lib/libgit2.dylib "$FILENAME"
+              ;;
+            Linux)
+              cp -L install/lib/libgit2.so "$FILENAME"
+              ;;
+          esac
+          echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ steps.artifact.outputs.filename }}
+          path: ${{ steps.artifact.outputs.filename }}
+          retention-days: 1
+
+  update-hashes:
+    name: update-hashes
+    needs: [build-native]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          path: artifacts
+          merge-multiple: true
+      - uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260 # v1.7.2
+        with:
+          sdk: stable
+      - name: generate asset hashes
+        working-directory: packages/libgit2_dart
+        run: |
+          dart pub get
+          dart run tool/generate_binary_hash.dart ../../artifacts
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: asset-hashes
+          path: packages/libgit2_dart/lib/src/hook/asset_hashes.dart
+          retention-days: 1

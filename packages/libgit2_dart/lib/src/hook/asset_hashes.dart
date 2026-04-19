@@ -9,7 +9,7 @@
 // ignore_for_file: unnecessary_ignore, lines_longer_than_80_chars
 
 /// The release tag used for downloading prebuilt binaries.
-const releaseTag = 'libgit2-v0.0.1';
+const releaseTag = 'libgit2_dart-v0.0.1';
 
 /// SHA256 hashes for pre-built native binaries. Keys are the artifact
 /// filenames. The map is empty in development; CI populates it before tagging.
