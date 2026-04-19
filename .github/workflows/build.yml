@@ -42,9 +42,13 @@ jobs:
           - target: aarch64-macos
             runner: macos-latest
             ext: dylib
+            osx_arch: arm64
+            vcpkg_triplet: arm64-osx
           - target: x86_64-macos
-            runner: macos-13
+            runner: macos-latest
             ext: dylib
+            osx_arch: x86_64
+            vcpkg_triplet: x64-osx
           - target: x86_64-linux
             runner: ubuntu-latest
             ext: so
@@ -71,16 +75,23 @@ jobs:
         run: |
           curl -fsSL "https://github.com/libgit2/libgit2/archive/refs/tags/${{ steps.libgit2.outputs.tag }}.tar.gz" -o libgit2.tar.gz
           mkdir -p libgit2-src
-          tar xzf libgit2.tar.gz -C libgit2-src --strip-components=1
+          tar xzf libgit2.tar.gz -C libgit2-src --strip-components=1 --exclude='*/tests/resources/*'
           rm libgit2.tar.gz
       - name: install native deps (linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libssl-dev libssh2-1-dev
+      - name: cache vcpkg libssh2 (macos)
+        if: runner.os == 'macOS'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: /usr/local/share/vcpkg/installed
+          key: vcpkg-macos-${{ matrix.vcpkg_triplet }}-libssh2-v1
       - name: install native deps (macos)
         if: runner.os == 'macOS'
-        run: brew install libssh2
+        run: |
+          "$VCPKG_INSTALLATION_ROOT/vcpkg" install libssh2:${{ matrix.vcpkg_triplet }}
       - name: cache vcpkg libssh2 (windows)
         if: runner.os == 'Windows'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
@@ -94,10 +105,20 @@ jobs:
       - name: configure
         run: |
           EXTRA_ARGS=()
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            TOOLCHAIN="${VCPKG_INSTALLATION_ROOT//\\//}/scripts/buildsystems/vcpkg.cmake"
-            EXTRA_ARGS+=("-DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN")
-          fi
+          case "$RUNNER_OS" in
+            Windows)
+              TOOLCHAIN="${VCPKG_INSTALLATION_ROOT//\\//}/scripts/buildsystems/vcpkg.cmake"
+              EXTRA_ARGS+=("-DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN")
+              ;;
+            macOS)
+              TOOLCHAIN="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+              EXTRA_ARGS+=(
+                "-DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN"
+                "-DVCPKG_TARGET_TRIPLET=${{ matrix.vcpkg_triplet }}"
+                "-DCMAKE_OSX_ARCHITECTURES=${{ matrix.osx_arch }}"
+              )
+              ;;
+          esac
           cmake -S libgit2-src -B build \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_SHARED_LIBS=ON \
