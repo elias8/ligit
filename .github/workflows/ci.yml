@@ -10,7 +10,7 @@ on:
       - '.github/workflows/checks.yml'
 
 concurrency:
-  group: ci-libgit2
+  group: ci-ligit
   cancel-in-progress: false
 
 permissions:

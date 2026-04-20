@@ -4,13 +4,13 @@ on:
   push:
     branches: [main]
     paths:
-      - 'packages/libgit2_dart/**'
-      - '!packages/libgit2_dart/lib/src/hook/asset_hashes.dart'
+      - 'packages/ligit/**'
+      - '!packages/ligit/lib/src/hook/asset_hashes.dart'
       - '.github/workflows/build.yml'
       - '.github/workflows/checks.yml'
 
 concurrency:
-  group: build-libgit2_dart
+  group: build-ligit
   cancel-in-progress: false
 
 jobs:
@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: check libgit2 tag exists
         run: |
-          TAG=$(cat packages/libgit2_dart/libgit2.version)
+          TAG=$(cat packages/ligit/libgit2.version)
           curl -fsSL -o /dev/null "https://github.com/libgit2/libgit2/archive/refs/tags/${TAG}.tar.gz"
 
   checks:
@@ -96,7 +96,7 @@ jobs:
       - name: resolve libgit2 tag
         id: libgit2
         run: |
-          TAG=$(cat packages/libgit2_dart/libgit2.version)
+          TAG=$(cat packages/ligit/libgit2.version)
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         id: libgit2-cache
@@ -236,12 +236,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libssl-dev libssh2-1-dev
       - name: generate asset hashes
-        working-directory: packages/libgit2_dart
+        working-directory: packages/ligit
         run: |
           dart pub get
           dart run tool/generate_binary_hash.dart ../../artifacts
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: asset-hashes
-          path: packages/libgit2_dart/lib/src/hook/asset_hashes.dart
+          path: packages/ligit/lib/src/hook/asset_hashes.dart
           retention-days: 1

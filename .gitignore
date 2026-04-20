@@ -16,5 +16,5 @@ pubspec.lock
 Thumbs.db
 
 # Local libgit2 C source checkout for development (override via LIBGIT2_SRC).
-# Anchored to the workspace root so it does not match `packages/libgit2_dart/`.
+# Anchored to the workspace root so it does not match `packages/ligit/`.
 /libgit2/

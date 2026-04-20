@@ -1,15 +1,15 @@
-name: libgit2_workspace
+name: ligit_workspace
 repository: https://github.com/elias8/libgit2
 
 environment:
   sdk: ^3.11.0
 
 workspace:
-  - packages/libgit2_dart
+  - packages/ligit
 
 hooks:
   user_defines:
-    libgit2_dart:
+    ligit:
       # How to obtain the native library binary.
       # - `compile` (default): Build from source using CMake
       # - `prebuilt`:          Download a pre-built binary from GitHub Releases

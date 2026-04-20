@@ -3,10 +3,10 @@ run-name: release ${{ github.ref_name }}
 
 on:
   push:
-    tags: ["libgit2_dart-v[0-9]*.[0-9]*.[0-9]*"]
+    tags: ["ligit-v[0-9]*.[0-9]*.[0-9]*"]
 
 concurrency:
-  group: release-libgit2_dart
+  group: release-ligit
   cancel-in-progress: false
 
 permissions:
@@ -20,9 +20,9 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: check tag matches versions
         run: |
-          TAG_VERSION="${GITHUB_REF_NAME#libgit2_dart-v}"
-          PUBSPEC_VERSION=$(grep '^version:' packages/libgit2_dart/pubspec.yaml | awk '{print $2}')
-          ASSET_HASH_VERSION=$(grep 'const releaseTag = ' packages/libgit2_dart/lib/src/hook/asset_hashes.dart | sed "s/.*'\(.*\)'.*/\1/" | sed 's/^libgit2_dart-v//; s/^v//')
+          TAG_VERSION="${GITHUB_REF_NAME#ligit-v}"
+          PUBSPEC_VERSION=$(grep '^version:' packages/ligit/pubspec.yaml | awk '{print $2}')
+          ASSET_HASH_VERSION=$(grep 'const releaseTag = ' packages/ligit/lib/src/hook/asset_hashes.dart | sed "s/.*'\(.*\)'.*/\1/" | sed 's/^ligit-v//; s/^v//')
 
           if [ "$TAG_VERSION" != "$PUBSPEC_VERSION" ]; then
             echo "::error::pubspec version ($PUBSPEC_VERSION) != tag ($TAG_VERSION). Update pubspec.yaml to match tag."
@@ -35,7 +35,7 @@ jobs:
           fi
       - name: check libgit2 tag exists
         run: |
-          TAG=$(cat packages/libgit2_dart/libgit2.version)
+          TAG=$(cat packages/ligit/libgit2.version)
           curl -fsSL -o /dev/null "https://github.com/libgit2/libgit2/archive/refs/tags/${TAG}.tar.gz"
 
   github-release:
@@ -67,7 +67,7 @@ jobs:
             esac
             filename=$(basename "$f")
             hash=$(sha256sum "$f" | cut -d' ' -f1)
-            expected=$(grep "'$filename':" packages/libgit2_dart/lib/src/hook/asset_hashes.dart | sed "s/.*': '\([^']*\)'.*/\1/")
+            expected=$(grep "'$filename':" packages/ligit/lib/src/hook/asset_hashes.dart | sed "s/.*': '\([^']*\)'.*/\1/")
             if [ "$hash" != "$expected" ]; then
               echo "::error::Hash mismatch for $filename"
               echo "Expected: $expected"
@@ -80,31 +80,31 @@ jobs:
         run: rm -rf artifacts/asset-hashes
       - name: extract release notes from CHANGELOG
         run: |
-          VERSION="${GITHUB_REF_NAME#libgit2_dart-v}"
-          CHANGELOG="packages/libgit2_dart/CHANGELOG.md"
+          VERSION="${GITHUB_REF_NAME#ligit-v}"
+          CHANGELOG="packages/ligit/CHANGELOG.md"
           ./.github/scripts/extract-changelog.sh --skip-header $CHANGELOG "$VERSION" > release-notes.md
           cat release-notes.md
       - name: create github release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="${GITHUB_REF_NAME#libgit2_dart-v}"
+          VERSION="${GITHUB_REF_NAME#ligit-v}"
           PRERELEASE=""
           if echo "$VERSION" | grep -q '-'; then
             PRERELEASE="--prerelease"
           fi
           gh release create "${{ github.ref_name }}" \
-            --title "libgit2_dart v${VERSION}" \
+            --title "ligit v${VERSION}" \
             --notes-file release-notes.md \
             $PRERELEASE \
             artifacts/*
 
   publish:
     needs: [github-release]
-    if: startsWith(github.ref_name, 'libgit2_dart-v')
+    if: startsWith(github.ref_name, 'ligit-v')
     permissions:
       id-token: write
     uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
     with:
       environment: pub.dev
-      working-directory: packages/libgit2_dart
+      working-directory: packages/ligit

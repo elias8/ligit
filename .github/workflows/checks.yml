@@ -8,16 +8,16 @@ jobs:
     name: changes
     runs-on: ubuntu-latest
     outputs:
-      libgit2_dart: ${{ steps.filter.outputs.libgit2_dart }}
+      ligit: ${{ steps.filter.outputs.ligit }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: filter
         with:
           filters: |
-            libgit2_dart:
-              - 'packages/libgit2_dart/**'
-              - '!packages/libgit2_dart/**/*.md'
+            ligit:
+              - 'packages/ligit/**'
+              - '!packages/ligit/**/*.md'
               - 'pubspec.yaml'
               - '.github/workflows/checks.yml'
               - '.github/workflows/pr-check.yml'
@@ -38,19 +38,19 @@ jobs:
           restore-keys: pub-${{ runner.os }}-
       - name: check libgit2 tag exists
         run: |
-          TAG=$(cat packages/libgit2_dart/libgit2.version)
+          TAG=$(cat packages/ligit/libgit2.version)
           curl -fsSL -o /dev/null "https://github.com/libgit2/libgit2/archive/refs/tags/$TAG.tar.gz"
       - run: dart pub get
       - run: dart format --set-exit-if-changed .
       - run: dart analyze .
-      - name: publish dry run libgit2_dart
-        working-directory: packages/libgit2_dart
+      - name: publish dry run ligit
+        working-directory: packages/ligit
         run: dart pub publish --dry-run
 
-  test-libgit2_dart:
-    name: test-libgit2_dart-${{ matrix.os }}
+  test-ligit:
+    name: test-ligit-${{ matrix.os }}
     needs: [analyze, changes]
-    if: needs.changes.outputs.libgit2_dart == 'true'
+    if: needs.changes.outputs.ligit == 'true'
     runs-on: ${{ matrix.runner }}
     defaults:
       run:
@@ -100,7 +100,7 @@ jobs:
       - name: resolve libgit2 tag
         id: libgit2
         run: |
-          TAG=$(cat packages/libgit2_dart/libgit2.version)
+          TAG=$(cat packages/ligit/libgit2.version)
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
       - name: set windows cmake toolchain
         if: runner.os == 'Windows'
@@ -112,11 +112,11 @@ jobs:
           path: |
             .dart_tool/hook_builds
             .dart_tool/hook_builds_shared
-          key: hooks-${{ matrix.os }}-${{ steps.libgit2.outputs.tag }}-${{ hashFiles('packages/libgit2_dart/hook/**', 'packages/libgit2_dart/lib/src/hook/**') }}
+          key: hooks-${{ matrix.os }}-${{ steps.libgit2.outputs.tag }}-${{ hashFiles('packages/ligit/hook/**', 'packages/ligit/lib/src/hook/**') }}
           save-always: true
       - run: dart pub get
       - name: run tests
-        working-directory: packages/libgit2_dart
+        working-directory: packages/ligit
         run: dart test
 
   # Single required status that aggregates every conditional job above.
@@ -129,7 +129,7 @@ jobs:
     if: always()
     needs:
       - analyze
-      - test-libgit2_dart
+      - test-ligit
     runs-on: ubuntu-latest
     steps:
       - name: verify required checks
