@@ -31,7 +31,6 @@ analyzer:
     use_build_context_synchronously: error
 
   exclude:
-    - "**/*.g.dart"
     - "**/*.gr.dart"
     - "**/*.freezed.dart"
     - "**/*.config.dart"
