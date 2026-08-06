@@ -137,7 +137,6 @@ FfiGenerator _createGenerator({
 }) => FfiGenerator(
   output: Output(
     dartFile: Uri.file(_nativeOutput),
-    sort: true,
     preamble: '// ignore_for_file: unused_field',
     style: const NativeExternalBindings(assetId: 'package:ligit/ligit.dart'),
   ),
