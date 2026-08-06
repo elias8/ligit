@@ -10,14 +10,13 @@ Pointer<CredentialUserpassPayload> allocUserpassPayload(
   Allocator arena,
   CredentialUserpassPayloadData data,
 ) {
-  final payload = arena<CredentialUserpassPayload>();
-  payload.ref.username = data.username
-      .toNativeUtf8(allocator: arena)
-      .cast<Char>();
-  payload.ref.password = data.password
-      .toNativeUtf8(allocator: arena)
-      .cast<Char>();
-  return payload;
+  final username = data.username.toNativeUtf8(allocator: arena).cast<Char>();
+  final password = data.password.toNativeUtf8(allocator: arena).cast<Char>();
+  return CredentialUserpassPayload.$allocate(
+    arena,
+    username: username,
+    password: password,
+  );
 }
 
 Pointer<
