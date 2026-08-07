@@ -606,6 +606,14 @@ bool remoteNameIsValid(String name) {
   });
 }
 
+int remoteOidType(int handle) {
+  return using((arena) {
+    final out = arena<UnsignedInt>();
+    checkCode(git_remote_oid_type(out, _remote(handle)));
+    return out.value;
+  });
+}
+
 int remoteAutotag(int handle) => git_remote_autotag(_remote(handle)).value;
 
 void remoteSetAutotag(int repoHandle, String name, int rule) {
