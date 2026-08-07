@@ -4,8 +4,8 @@
 ///   cd packages/ligit
 ///   dart run tool/ffigen.dart
 ///
-/// Header location: looks at `LIBGIT2_INCLUDE` first, then a small set of
-/// well-known directories under `/usr/local`, `/opt/homebrew`, and `/usr`.
+/// Headers come from `LIBGIT2_INCLUDE` when set; otherwise the pinned source
+/// is resolved from `LIBGIT2_SRC`, the workspace, or the download cache.
 library;
 
 import 'dart:io';
@@ -14,6 +14,7 @@ import 'package:ffigen/ffigen.dart';
 import 'package:ffigen/src/code_generator.dart';
 import 'package:ffigen/src/context.dart';
 import 'package:ffigen/src/header_parser.dart' as ffigen;
+import 'package:ligit/src/hook/libgit2_source.dart';
 import 'package:logging/logging.dart';
 
 import 'ffigen/enums.dart';
@@ -22,14 +23,22 @@ import 'ffigen/naming.dart';
 const _nativeOutput = 'lib/src/ffi/libgit2.g.dart';
 const _enumsOutput = 'lib/src/ffi/libgit2_enums.g.dart';
 
-void main() {
+Future<void> main() async {
   Logger.root.onRecord.listen((r) => stderr.writeln(r));
 
-  final include = _resolveIncludeDir();
+  final packageRoot = Directory.current.uri;
+  String? include;
+  try {
+    include = await _resolveIncludeDir(packageRoot);
+  } on Object catch (error) {
+    stderr.writeln('Failed to resolve libgit2 headers: $error');
+    exit(1);
+  }
   if (include == null) {
     stderr.writeln(
-      'Could not find libgit2 headers. Set LIBGIT2_INCLUDE to the directory '
-      'containing `git2.h`, or install libgit2 via your package manager.',
+      'Could not resolve libgit2 headers for ${pinnedTag(packageRoot)}. '
+      'Set LIBGIT2_INCLUDE or LIBGIT2_SRC to a matching local checkout, '
+      'or ensure the pinned source can be downloaded.',
     );
     exit(1);
   }
@@ -60,22 +69,36 @@ void main() {
   }
 }
 
-String? _resolveIncludeDir() {
+Future<String?> _resolveIncludeDir(Uri packageRoot) async {
   final env = Platform.environment['LIBGIT2_INCLUDE'];
-  if (env != null && env.isNotEmpty && _hasGit2H(env)) return env;
-
-  const candidates = [
-    '/usr/local/include',
-    '/opt/homebrew/include',
-    '/usr/include',
-  ];
-  for (final dir in candidates) {
-    if (_hasGit2H(dir)) return dir;
+  if (env != null && env.isNotEmpty) {
+    final include = _withoutTrailingSeparator(env);
+    if (!_hasGit2H(include)) {
+      throw StateError('libgit2 headers not found at $include.');
+    }
+    validatePinnedHeaders(
+      include: Directory(include),
+      packageRoot: packageRoot,
+    );
+    return include;
   }
-  return null;
+
+  final source = await resolveSource(
+    packageRoot: packageRoot,
+    cacheBase: packageRoot.resolve('.dart_tool/ffigen/'),
+  );
+  final include = _withoutTrailingSeparator(
+    Directory.fromUri(source.uri.resolve('include/')).path,
+  );
+  if (!_hasGit2H(include)) return null;
+  validatePinnedHeaders(include: Directory(include), packageRoot: packageRoot);
+  return include;
 }
 
 bool _hasGit2H(String dir) => File('$dir/git2.h').existsSync();
+
+String _withoutTrailingSeparator(String path) =>
+    path.replaceFirst(RegExp(r'[/\\]+$'), '');
 
 List<String> _sdkIncludeOpts() {
   if (!Platform.isMacOS) return const [];

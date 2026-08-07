@@ -70,7 +70,39 @@ String pinnedTag(Uri packageRoot) {
       'This file must contain the pinned libgit2 release tag (e.g. v1.8.4).',
     );
   }
-  return file.readAsStringSync().trim();
+  final tag = file.readAsStringSync().trim();
+  if (!RegExp(r'^v\d+\.\d+\.\d+$').hasMatch(tag)) {
+    throw StateError(
+      'Invalid libgit2 version tag "$tag" in ${file.path}. '
+      'Expected a tag such as v1.9.2.',
+    );
+  }
+  return tag;
+}
+
+/// Verifies that [include] contains headers for the pinned libgit2 release.
+void validatePinnedHeaders({
+  required Directory include,
+  required Uri packageRoot,
+}) {
+  final versionHeader = File.fromUri(include.uri.resolve('git2/version.h'));
+  if (!versionHeader.existsSync()) {
+    throw StateError(
+      'libgit2 version header not found at ${versionHeader.path}.',
+    );
+  }
+
+  final actual = RegExp(
+    r'^#define LIBGIT2_VERSION\s+"([^"]+)"',
+    multiLine: true,
+  ).firstMatch(versionHeader.readAsStringSync())?.group(1);
+  final expected = pinnedTag(packageRoot).replaceFirst(RegExp('^v'), '');
+  if (actual != expected) {
+    throw StateError(
+      'libgit2 headers at ${include.path} are version ${actual ?? 'unknown'}, '
+      'but libgit2.version pins $expected.',
+    );
+  }
 }
 
 /// Resolves the libgit2 source directory.
