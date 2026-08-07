@@ -6733,8 +6733,10 @@ external int git_merge_file(
 
 /// Merge two files as they exist in the index, using the given common
 /// ancestor as the baseline, producing a `merge_file_result` that
-/// reflects the merge result.  The `merge_file_result` must be freed with
-/// `merge_file_result_free`.
+/// reflects the merge result.  The `merge_file_result` must be
+/// freed with `merge_file_result_free`.
+///
+/// At least one of `ancestor`, `ours`, or `theirs` must be non-null.
 ///
 /// @param out The merge_file_result to be filled in
 /// @param repo The repository
@@ -11535,6 +11537,23 @@ external ffi.Pointer<ffi.Char> git_remote_name(ffi.Pointer<Remote> remote);
 external int git_remote_name_is_valid(
   ffi.Pointer<ffi.Int> valid,
   ffi.Pointer<ffi.Char> remote_name,
+);
+
+/// Get the remote repository's object format.
+///
+/// The remote (or more exactly its transport) must have connected to
+/// the remote repository. This format is available as soon as the
+/// connection to the remote is initiated and stays connected.
+///
+/// @param out the resulting object format type
+/// @param remote the remote
+/// @return 0 on success, or an error code
+@ffi.Native<
+  ffi.Int Function(ffi.Pointer<ffi.UnsignedInt>, ffi.Pointer<Remote>)
+>()
+external int git_remote_oid_type(
+  ffi.Pointer<ffi.UnsignedInt> out,
+  ffi.Pointer<Remote> remote,
 );
 
 /// Get the remote's repository
@@ -18094,7 +18113,7 @@ final class IndexConflictIterator extends ffi.Opaque {}
 ///
 /// This is a public structure that represents a file entry in the index.
 /// The meaning of the fields corresponds to core Git's documentation (in
-/// "Documentation/technical/index-format.txt").
+/// "Documentation/gitformat-index.adoc").
 ///
 /// The `flags` field consists of a number of bit fields which can be
 /// accessed via the first set of `GIT_INDEX_ENTRY_...` bitmasks below.
@@ -18281,19 +18300,19 @@ final class Iterator extends ffi.Opaque {}
 
 const String LIBGIT2_SOVERSION = '1.9';
 
-const String LIBGIT2_VERSION = '1.9.2';
+const String LIBGIT2_VERSION = '1.9.3';
 
 const int LIBGIT2_VERSION_MAJOR = 1;
 
 const int LIBGIT2_VERSION_MINOR = 9;
 
-const int LIBGIT2_VERSION_NUMBER = 1090200;
+const int LIBGIT2_VERSION_NUMBER = 1090300;
 
 const int LIBGIT2_VERSION_PATCH = 0;
 
 const int LIBGIT2_VERSION_PRERELEASE = 0;
 
-const int LIBGIT2_VERSION_REVISION = 2;
+const int LIBGIT2_VERSION_REVISION = 3;
 
 const int LIBGIT2_VER_MAJOR = 1;
 
@@ -18303,7 +18322,7 @@ const int LIBGIT2_VER_PATCH = 0;
 
 const int LIBGIT2_VER_PRERELEASE = 0;
 
-const int LIBGIT2_VER_REVISION = 2;
+const int LIBGIT2_VER_REVISION = 3;
 
 final class Mailmap extends ffi.Opaque {}
 
@@ -18990,9 +19009,8 @@ final class ProxyOptions extends ffi.Struct {
   /// though this field isn't set.
   external CredentialAcquireCb credentials;
 
-  /// If cert verification fails, this will be called to let the
-  /// user make the final decision of whether to allow the
-  /// connection to proceed. Returns 0 to allow the connection
+  /// This will be called to let the user make the final decision of whether
+  /// to allow the connection to proceed. Returns 0 to allow the connection
   /// or a negative value to indicate an error.
   external TransportCertificateCheckCb certificate_check;
 
@@ -19319,9 +19337,8 @@ final class RemoteCallbacks extends ffi.Struct {
   /// though this field isn't set.
   external CredentialAcquireCb credentials;
 
-  /// If cert verification fails, this will be called to let the
-  /// user make the final decision of whether to allow the
-  /// connection to proceed. Returns 0 to allow the connection
+  /// This will be called to let the user make the final decision of whether
+  /// to allow the connection to proceed. Returns 0 to allow the connection
   /// or a negative value to indicate an error.
   external TransportCertificateCheckCb certificate_check;
 
