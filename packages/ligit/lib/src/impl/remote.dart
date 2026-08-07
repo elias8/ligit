@@ -196,6 +196,11 @@ final class Remote {
   /// Whether the underlying transport is connected.
   bool get isConnected => remoteConnected(_handle);
 
+  /// The object ID type reported by the connected remote.
+  ///
+  /// Must be called after [connect].
+  ObjectIdType get oidType => ObjectIdType.fromValue(remoteOidType(_handle));
+
   /// Opens a connection to the remote.
   ///
   /// The transport is selected by URL; [direction] picks between

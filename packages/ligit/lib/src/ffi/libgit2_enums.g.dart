@@ -2437,7 +2437,7 @@ enum RemoteAutotagOption {
   /// Don't ask for any tags beyond the refspecs.
   none(2),
 
-  /// Ask for the all the tags.
+  /// Ask for all the tags.
   all(3);
 
   final int value;
