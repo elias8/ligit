@@ -406,6 +406,18 @@ void main() {
         expect(heads.map((h) => h.name), contains('refs/heads/main'));
       });
     });
+
+    group('oidType', () {
+      test('returns the object format after connecting', () {
+        final remote = Remote.createAnonymous(repo, upstream.fileUrl);
+        addTearDown(remote.dispose);
+
+        remote.connect(Direction.fetch);
+        addTearDown(remote.disconnect);
+
+        expect(remote.oidType, ObjectIdType.sha1);
+      });
+    });
   });
 
   group('RepositoryRemote', () {
