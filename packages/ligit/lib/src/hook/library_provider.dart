@@ -242,15 +242,15 @@ final class CompileFromSource extends LibraryProvider {
     return cacheDir;
   }
 
-  Future<Directory> _resolveSource() async {
+  Future<Directory> _resolveSource() {
     if (sourcePath != null && sourcePath!.isNotEmpty) {
       final dir = Directory(sourcePath!);
-      if (dir.existsSync()) return dir;
+      if (dir.existsSync()) return Future.value(dir);
     }
 
     final workspaceRoot = input.packageRoot.resolve('../../');
     final local = Directory.fromUri(workspaceRoot.resolve('libgit2/'));
-    if (local.existsSync()) return local;
+    if (local.existsSync()) return Future.value(local);
 
     return switch (downloadMethod) {
       .tarball => _downloadTarball(),

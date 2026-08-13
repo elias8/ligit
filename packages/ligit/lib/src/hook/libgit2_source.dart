@@ -114,16 +114,16 @@ void validatePinnedHeaders({
 Future<Directory> resolveSource({
   required Uri packageRoot,
   required Uri cacheBase,
-}) async {
+}) {
   final envPath = Platform.environment[libgit2SrcEnvKey];
   if (envPath != null && envPath.isNotEmpty) {
     final dir = Directory(envPath);
-    if (dir.existsSync()) return dir;
+    if (dir.existsSync()) return Future.value(dir);
   }
 
   final workspaceRoot = packageRoot.resolve('../../');
   final localCheckout = Directory.fromUri(workspaceRoot.resolve('libgit2/'));
-  if (localCheckout.existsSync()) return localCheckout;
+  if (localCheckout.existsSync()) return Future.value(localCheckout);
 
   return downloadSource(cacheBase, packageRoot: packageRoot);
 }
