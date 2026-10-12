@@ -271,9 +271,7 @@ void _writeCallbacksInto(
   final certCb = r.certificateCheck;
   if (certCb != null) {
     final callable =
-        NativeCallable<
-          Int Function(Pointer<Cert>, Int, Pointer<Char>, Pointer<Void>)
-        >.isolateLocal((
+        NativeCallable<TransportCertificateCheckCbfunction>.isolateLocal((
           Pointer<Cert> cert,
           int valid,
           Pointer<Char> host,
@@ -302,82 +300,74 @@ void _writeCallbacksInto(
 
   final credCb = r.credentials;
   if (credCb != null && builtin == null) {
-    final callable =
-        NativeCallable<
-          Int Function(
-            Pointer<Pointer<Credential>>,
-            Pointer<Char>,
-            Pointer<Char>,
-            UnsignedInt,
-            Pointer<Void>,
-          )
-        >.isolateLocal((
-          Pointer<Pointer<Credential>> out,
-          Pointer<Char> url,
-          Pointer<Char> user,
-          int allowed,
-          Pointer<Void> _,
-        ) {
-          try {
-            final handle = credCb(
-              url == nullptr ? '' : url.cast<Utf8>().toDartString(),
-              user == nullptr ? null : user.cast<Utf8>().toDartString(),
-              allowed,
-            );
-            if (handle == 0) return ErrorCode.passthrough.value;
-            out.value = Pointer<Credential>.fromAddress(handle);
-            return 0;
-          } on Object {
-            return -1;
-          }
-        }, exceptionalReturn: -1);
+    final callable = NativeCallable<CredentialAcquireCbfunction>.isolateLocal((
+      Pointer<Pointer<Credential>> out,
+      Pointer<Char> url,
+      Pointer<Char> user,
+      int allowed,
+      Pointer<Void> _,
+    ) {
+      try {
+        final handle = credCb(
+          url == nullptr ? '' : url.cast<Utf8>().toDartString(),
+          user == nullptr ? null : user.cast<Utf8>().toDartString(),
+          allowed,
+        );
+        if (handle == 0) return ErrorCode.passthrough.value;
+        out.value = Pointer<Credential>.fromAddress(handle);
+        return 0;
+      } on Object {
+        return -1;
+      }
+    }, exceptionalReturn: -1);
     callables.add(callable);
     dest.credentials = callable.nativeFunction.cast();
   }
 
   final sidebandCb = r.sidebandProgress;
   if (sidebandCb != null) {
-    final callable =
-        NativeCallable<
-          Int Function(Pointer<Char>, Int, Pointer<Void>)
-        >.isolateLocal((Pointer<Char> str, int len, Pointer<Void> _) {
-          try {
-            if (str == nullptr || len <= 0) return sidebandCb('');
-            final bytes = str.cast<Uint8>();
-            final buf = Uint8List(len);
-            for (var i = 0; i < len; i++) {
-              buf[i] = bytes[i];
-            }
-            return sidebandCb(String.fromCharCodes(buf));
-          } on Object {
-            return -1;
-          }
-        }, exceptionalReturn: -1);
+    final callable = NativeCallable<TransportMessageCbfunction>.isolateLocal((
+      Pointer<Char> str,
+      int len,
+      Pointer<Void> _,
+    ) {
+      try {
+        if (str == nullptr || len <= 0) return sidebandCb('');
+        final bytes = str.cast<Uint8>();
+        final buf = Uint8List(len);
+        for (var i = 0; i < len; i++) {
+          buf[i] = bytes[i];
+        }
+        return sidebandCb(String.fromCharCodes(buf));
+      } on Object {
+        return -1;
+      }
+    }, exceptionalReturn: -1);
     callables.add(callable);
     dest.sideband_progress = callable.nativeFunction.cast();
   }
 
   final transferCb = r.transferProgress;
   if (transferCb != null) {
-    final callable =
-        NativeCallable<
-          Int Function(Pointer<IndexerProgress>, Pointer<Void>)
-        >.isolateLocal((Pointer<IndexerProgress> stats, Pointer<Void> _) {
-          try {
-            final s = stats.ref;
-            return transferCb((
-              totalObjects: s.total_objects,
-              indexedObjects: s.indexed_objects,
-              receivedObjects: s.received_objects,
-              localObjects: s.local_objects,
-              totalDeltas: s.total_deltas,
-              indexedDeltas: s.indexed_deltas,
-              receivedBytes: s.received_bytes,
-            ));
-          } on Object {
-            return -1;
-          }
-        }, exceptionalReturn: -1);
+    final callable = NativeCallable<IndexerProgressCbfunction>.isolateLocal((
+      Pointer<IndexerProgress> stats,
+      Pointer<Void> _,
+    ) {
+      try {
+        final s = stats.ref;
+        return transferCb((
+          totalObjects: s.total_objects,
+          indexedObjects: s.indexed_objects,
+          receivedObjects: s.received_objects,
+          localObjects: s.local_objects,
+          totalDeltas: s.total_deltas,
+          indexedDeltas: s.indexed_deltas,
+          receivedBytes: s.received_bytes,
+        ));
+      } on Object {
+        return -1;
+      }
+    }, exceptionalReturn: -1);
     callables.add(callable);
     dest.transfer_progress = callable.nativeFunction.cast();
   }
@@ -385,9 +375,12 @@ void _writeCallbacksInto(
   final pushCb = r.pushTransferProgress;
   if (pushCb != null) {
     final callable =
-        NativeCallable<
-          Int Function(UnsignedInt, UnsignedInt, Size, Pointer<Void>)
-        >.isolateLocal((int current, int total, int bytes, Pointer<Void> _) {
+        NativeCallable<PushTransferProgressCbfunction>.isolateLocal((
+          int current,
+          int total,
+          int bytes,
+          Pointer<Void> _,
+        ) {
           try {
             return pushCb(current, total, bytes);
           } on Object {

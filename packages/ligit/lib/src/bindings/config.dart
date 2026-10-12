@@ -421,11 +421,13 @@ String? configGetStringDirect(int handle, String name) {
   });
 }
 
-NativeCallable<Int Function(Pointer<ConfigEntry>, Pointer<Void>)>
-_foreachCallable(int Function(ConfigEntryRecord entry) callback) {
-  return NativeCallable<
-    Int Function(Pointer<ConfigEntry>, Pointer<Void>)
-  >.isolateLocal((Pointer<ConfigEntry> entry, Pointer<Void> _) {
+NativeCallable<ConfigForeachCbfunction> _foreachCallable(
+  int Function(ConfigEntryRecord entry) callback,
+) {
+  return NativeCallable<ConfigForeachCbfunction>.isolateLocal((
+    Pointer<ConfigEntry> entry,
+    Pointer<Void> _,
+  ) {
     try {
       return callback((
         name: entry.ref.name.cast<Utf8>().toDartString(),

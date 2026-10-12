@@ -448,33 +448,24 @@ int repositoryFetchheadForeach(
   })
   callback,
 ) {
-  final cb =
-      NativeCallable<
-        Int Function(
-          Pointer<Char>,
-          Pointer<Char>,
-          Pointer<Oid>,
-          UnsignedInt,
-          Pointer<Void>,
-        )
-      >.isolateLocal((
-        Pointer<Char> refName,
-        Pointer<Char> remoteUrl,
-        Pointer<Oid> oid,
-        int isMerge,
-        Pointer<Void> _,
-      ) {
-        try {
-          return callback(
-            refName: refName.cast<Utf8>().toDartString(),
-            remoteUrl: remoteUrl.cast<Utf8>().toDartString(),
-            oid: _oidBytes(oid),
-            isMerge: isMerge != 0,
-          );
-        } on Object {
-          return -1;
-        }
-      }, exceptionalReturn: -1);
+  final cb = NativeCallable<RepositoryFetchheadForeachCbfunction>.isolateLocal((
+    Pointer<Char> refName,
+    Pointer<Char> remoteUrl,
+    Pointer<Oid> oid,
+    int isMerge,
+    Pointer<Void> _,
+  ) {
+    try {
+      return callback(
+        refName: refName.cast<Utf8>().toDartString(),
+        remoteUrl: remoteUrl.cast<Utf8>().toDartString(),
+        oid: _oidBytes(oid),
+        isMerge: isMerge != 0,
+      );
+    } on Object {
+      return -1;
+    }
+  }, exceptionalReturn: -1);
   try {
     final code = git_repository_fetchhead_foreach(
       _repo(handle),
@@ -492,17 +483,16 @@ int repositoryMergeheadForeach(
   int handle,
   int Function(Uint8List oid) callback,
 ) {
-  final cb =
-      NativeCallable<Int Function(Pointer<Oid>, Pointer<Void>)>.isolateLocal((
-        Pointer<Oid> oid,
-        Pointer<Void> _,
-      ) {
-        try {
-          return callback(_oidBytes(oid));
-        } on Object {
-          return -1;
-        }
-      }, exceptionalReturn: -1);
+  final cb = NativeCallable<RepositoryMergeheadForeachCbfunction>.isolateLocal((
+    Pointer<Oid> oid,
+    Pointer<Void> _,
+  ) {
+    try {
+      return callback(_oidBytes(oid));
+    } on Object {
+      return -1;
+    }
+  }, exceptionalReturn: -1);
   try {
     final code = git_repository_mergehead_foreach(
       _repo(handle),

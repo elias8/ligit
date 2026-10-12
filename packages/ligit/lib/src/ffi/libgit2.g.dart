@@ -7,6 +7,7 @@
 library;
 
 import 'dart:ffi' as ffi;
+
 import 'libgit2_enums.g.dart';
 
 /// Frees a `annotated_commit`.
@@ -8071,7 +8072,7 @@ external int _git_odb_open_wstream(
 int git_odb_open_wstream(
   ffi.Pointer<ffi.Pointer<OdbStream>> out,
   ffi.Pointer<Odb> db,
-  DartObjectSizeT size,
+  Dartgit_object_size_t size,
   ObjectT type,
 ) {
   return _git_odb_open_wstream(out, db, size, type.value);
@@ -15853,6 +15854,16 @@ external int git_worktree_unlock(ffi.Pointer<Worktree> wt);
 @ffi.Native<ffi.Int Function(ffi.Pointer<Worktree>)>()
 external int git_worktree_validate(ffi.Pointer<Worktree> wt);
 
+/// Annotated commits are commits with additional metadata about how the
+/// commit was resolved, which can be used for maintaining the user's
+/// "intent" through commands like merge and rebase.
+///
+/// For example, if a user wants to conceptually "merge `HEAD`", then the
+/// commit portion of an annotated commit will point to the `HEAD` commit,
+/// but the _annotation_ will denote the ref `HEAD`. This allows git to
+/// perform the internal bookkeeping so that the system knows both the
+/// content of what is being merged but also how the content was looked up
+/// so that it can be recorded in the reflog appropriately.
 final class AnnotatedCommit extends ffi.Opaque {}
 
 /// When applying a patch, callback that will be made per delta (file).
@@ -15867,15 +15878,14 @@ final class AnnotatedCommit extends ffi.Opaque {}
 /// @param payload User-specified payload
 /// @return 0 if the delta is applied, < 0 if the apply process will be aborted
 /// or > 0 if the delta will not be applied.
-typedef ApplyDeltaCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<DiffDelta> delta,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef ApplyDeltaCb = ffi.Pointer<ffi.NativeFunction<ApplyDeltaCbfunction>>;
+typedef ApplyDeltaCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<DiffDelta> delta,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_apply_delta_cbFunction =
+    int Function(ffi.Pointer<DiffDelta> delta, ffi.Pointer<ffi.Void> payload);
 
 /// When applying a patch, callback that will be made per hunk.
 ///
@@ -15889,15 +15899,11 @@ typedef ApplyDeltaCb =
 /// @param payload User-specified payload
 /// @return 0 if the hunk is applied, < 0 if the apply process will be aborted
 /// or > 0 if the hunk will not be applied.
-typedef ApplyHunkCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<DiffHunk> hunk,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef ApplyHunkCb = ffi.Pointer<ffi.NativeFunction<ApplyHunkCbfunction>>;
+typedef ApplyHunkCbfunction =
+    ffi.Int Function(ffi.Pointer<DiffHunk> hunk, ffi.Pointer<ffi.Void> payload);
+typedef Dartgit_apply_hunk_cbFunction =
+    int Function(ffi.Pointer<DiffHunk> hunk, ffi.Pointer<ffi.Void> payload);
 
 /// Apply options structure.
 ///
@@ -15959,16 +15965,19 @@ final class ApplyOptions extends ffi.Struct {
 /// @param payload A user-specified pointer.
 /// @return 0 to continue looping, non-zero to stop. This value will be returned
 /// from attr_foreach.
-typedef AttrForeachCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ffi.Char> name,
-          ffi.Pointer<ffi.Char> value,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef AttrForeachCb = ffi.Pointer<ffi.NativeFunction<AttrForeachCbfunction>>;
+typedef AttrForeachCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Char> name,
+      ffi.Pointer<ffi.Char> value,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_attr_foreach_cbFunction =
+    int Function(
+      ffi.Pointer<ffi.Char> name,
+      ffi.Pointer<ffi.Char> value,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// An options structure for querying attributes.
 final class AttrOptions extends ffi.Struct {
@@ -15986,6 +15995,7 @@ final class AttrOptions extends ffi.Struct {
   external Oid attr_commit_id;
 }
 
+/// Opaque structure to hold blame results
 final class Blame extends ffi.Opaque {}
 
 /// Structure that represents a blame hunk.
@@ -16098,6 +16108,7 @@ final class BlameOptions extends ffi.Struct {
   external int max_line;
 }
 
+/// In-memory representation of a blob object.
 final class Blob extends ffi.Opaque {}
 
 /// The options used when applying filter options to a file.
@@ -16129,6 +16140,7 @@ final class BlobFilterOptions extends ffi.Struct {
   external Oid attr_commit_id;
 }
 
+/// Iterator type for branches
 final class BranchIterator extends ffi.Opaque {}
 
 /// A data buffer for exporting data from libgit2
@@ -16251,18 +16263,25 @@ final class CertX509 extends ffi.Struct {
 /// @param payload the user-supplied callback payload
 /// @return 0 on success, or an error code
 typedef CheckoutNotifyCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.UnsignedInt why,
-          ffi.Pointer<ffi.Char> path,
-          ffi.Pointer<DiffFile> baseline,
-          ffi.Pointer<DiffFile> target,
-          ffi.Pointer<DiffFile> workdir,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<CheckoutNotifyCbfunction>>;
+typedef CheckoutNotifyCbfunction =
+    ffi.Int Function(
+      ffi.UnsignedInt why,
+      ffi.Pointer<ffi.Char> path,
+      ffi.Pointer<DiffFile> baseline,
+      ffi.Pointer<DiffFile> target,
+      ffi.Pointer<DiffFile> workdir,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_checkout_notify_cbFunction =
+    int Function(
+      CheckoutNotify why,
+      ffi.Pointer<ffi.Char> path,
+      ffi.Pointer<DiffFile> baseline,
+      ffi.Pointer<DiffFile> target,
+      ffi.Pointer<DiffFile> workdir,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Checkout options structure
 ///
@@ -16382,14 +16401,17 @@ final class CheckoutPerfdata extends ffi.Struct {
 /// @param perfdata the performance data for the checkout
 /// @param payload the user-supplied callback payload
 typedef CheckoutPerfdataCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Void Function(
-          ffi.Pointer<CheckoutPerfdata> perfdata,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<CheckoutPerfdataCbfunction>>;
+typedef CheckoutPerfdataCbfunction =
+    ffi.Void Function(
+      ffi.Pointer<CheckoutPerfdata> perfdata,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_checkout_perfdata_cbFunction =
+    void Function(
+      ffi.Pointer<CheckoutPerfdata> perfdata,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Checkout progress notification function.
 ///
@@ -16398,16 +16420,21 @@ typedef CheckoutPerfdataCb =
 /// @param total_steps number of total steps in the checkout process
 /// @param payload the user-supplied callback payload
 typedef CheckoutProgressCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Void Function(
-          ffi.Pointer<ffi.Char> path,
-          ffi.Size completed_steps,
-          ffi.Size total_steps,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<CheckoutProgressCbfunction>>;
+typedef CheckoutProgressCbfunction =
+    ffi.Void Function(
+      ffi.Pointer<ffi.Char> path,
+      ffi.Size completed_steps,
+      ffi.Size total_steps,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_checkout_progress_cbFunction =
+    void Function(
+      ffi.Pointer<ffi.Char> path,
+      int completed_steps,
+      int total_steps,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Cherry-pick options
 final class CherrypickOptions extends ffi.Struct {
@@ -16484,6 +16511,7 @@ final class CloneOptions extends ffi.Struct {
   external ffi.Pointer<ffi.Void> remote_cb_payload;
 }
 
+/// Parsed representation of a commit object.
 final class Commit extends ffi.Opaque {}
 
 /// Commit creation callback: used when a function is going to create
@@ -16511,26 +16539,38 @@ final class Commit extends ffi.Opaque {}
 /// if no callback had been specified, any other value to stop
 /// and return a failure
 typedef CommitCreateCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<Oid> out,
-          ffi.Pointer<Signature> author,
-          ffi.Pointer<Signature> committer,
-          ffi.Pointer<ffi.Char> message_encoding,
-          ffi.Pointer<ffi.Char> message,
-          ffi.Pointer<Tree> tree,
-          ffi.Size parent_count,
-          ffi.Pointer<ffi.Pointer<Commit>> parents,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<CommitCreateCbfunction>>;
+typedef CommitCreateCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<Oid> out,
+      ffi.Pointer<Signature> author,
+      ffi.Pointer<Signature> committer,
+      ffi.Pointer<ffi.Char> message_encoding,
+      ffi.Pointer<ffi.Char> message,
+      ffi.Pointer<Tree> tree,
+      ffi.Size parent_count,
+      ffi.Pointer<ffi.Pointer<Commit>> parents,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_commit_create_cbFunction =
+    int Function(
+      ffi.Pointer<Oid> out,
+      ffi.Pointer<Signature> author,
+      ffi.Pointer<Signature> committer,
+      ffi.Pointer<ffi.Char> message_encoding,
+      ffi.Pointer<ffi.Char> message,
+      ffi.Pointer<Tree> tree,
+      int parent_count,
+      ffi.Pointer<ffi.Pointer<Commit>> parents,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 final class CommitCreateOptions extends ffi.Opaque {}
 
+/// A git commit-graph
 final class CommitGraph extends ffi.Opaque {}
 
+/// a writer for commit-graph files.
 final class CommitGraphWriter extends ffi.Opaque {}
 
 /// Provide a commit signature during commit creation.
@@ -16541,16 +16581,21 @@ final class CommitGraphWriter extends ffi.Opaque {}
 ///
 /// @deprecated use a `commit_create_cb` instead
 typedef CommitSigningCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<Buf> signature,
-          ffi.Pointer<Buf> signature_field,
-          ffi.Pointer<ffi.Char> commit_content,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<CommitSigningCbfunction>>;
+typedef CommitSigningCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<Buf> signature,
+      ffi.Pointer<Buf> signature_field,
+      ffi.Pointer<ffi.Char> commit_content,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_commit_signing_cbFunction =
+    int Function(
+      ffi.Pointer<Buf> signature,
+      ffi.Pointer<Buf> signature_field,
+      ffi.Pointer<ffi.Char> commit_content,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// An array of commits returned from the library
 final class Commitarray extends ffi.Struct {
@@ -16568,8 +16613,10 @@ final class Commitarray extends ffi.Struct {
     ..ref.count = count;
 }
 
+/// Memory representation of a set of config files
 final class Config extends ffi.Opaque {}
 
+/// Interface to access a configuration file
 final class ConfigBackend extends ffi.Opaque {}
 
 /// An entry in a configuration file
@@ -16621,15 +16668,16 @@ final class ConfigEntry extends ffi.Struct {
 /// @param payload a user-specified pointer
 /// @return non-zero to terminate the iteration.
 typedef ConfigForeachCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ConfigEntry> entry,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<ConfigForeachCbfunction>>;
+typedef ConfigForeachCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<ConfigEntry> entry,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_config_foreach_cbFunction =
+    int Function(ffi.Pointer<ConfigEntry> entry, ffi.Pointer<ffi.Void> payload);
 
+/// An opaque structure for a configuration iterator.
 final class ConfigIterator extends ffi.Opaque {}
 
 /// Mapping from config variables to values.
@@ -16727,17 +16775,23 @@ final class Credential extends ffi.Struct {
 /// @return 0 for success, < 0 to indicate an error, > 0 to indicate
 /// no credential was acquired
 typedef CredentialAcquireCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ffi.Pointer<Credential>> out,
-          ffi.Pointer<ffi.Char> url,
-          ffi.Pointer<ffi.Char> username_from_url,
-          ffi.UnsignedInt allowed_types,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<CredentialAcquireCbfunction>>;
+typedef CredentialAcquireCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Pointer<Credential>> out,
+      ffi.Pointer<ffi.Char> url,
+      ffi.Pointer<ffi.Char> username_from_url,
+      ffi.UnsignedInt allowed_types,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_credential_acquire_cbFunction =
+    int Function(
+      ffi.Pointer<ffi.Pointer<Credential>> out,
+      ffi.Pointer<ffi.Char> url,
+      ffi.Pointer<ffi.Char> username_from_url,
+      int allowed_types,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// A key for NTLM/Kerberos "default" credentials
 typedef CredentialDefault = Credential;
@@ -16753,18 +16807,25 @@ typedef CredentialDefault = Credential;
 /// @return 0 for success, < 0 to indicate an error, > 0 to indicate
 /// no credential was acquired
 typedef CredentialSignCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<_LIBSSH2_SESSION> session,
-          ffi.Pointer<ffi.Pointer<ffi.UnsignedChar>> sig,
-          ffi.Pointer<ffi.Size> sig_len,
-          ffi.Pointer<ffi.UnsignedChar> data,
-          ffi.Size data_len,
-          ffi.Pointer<ffi.Pointer<ffi.Void>> abstract,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<CredentialSignCbfunction>>;
+typedef CredentialSignCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<LIBSSH2_SESSION> session,
+      ffi.Pointer<ffi.Pointer<ffi.UnsignedChar>> sig,
+      ffi.Pointer<ffi.Size> sig_len,
+      ffi.Pointer<ffi.UnsignedChar> data,
+      ffi.Size data_len,
+      ffi.Pointer<ffi.Pointer<ffi.Void>> abstract,
+    );
+typedef Dartgit_credential_sign_cbFunction =
+    int Function(
+      ffi.Pointer<LIBSSH2_SESSION> session,
+      ffi.Pointer<ffi.Pointer<ffi.UnsignedChar>> sig,
+      ffi.Pointer<ffi.Size> sig_len,
+      ffi.Pointer<ffi.UnsignedChar> data,
+      int data_len,
+      ffi.Pointer<ffi.Pointer<ffi.Void>> abstract,
+    );
 
 /// A key with a custom signature function
 final class CredentialSshCustom extends ffi.Struct {
@@ -16814,20 +16875,29 @@ final class CredentialSshInteractive extends ffi.Struct {
 /// @param responses the responses
 /// @param abstract the abstract
 typedef CredentialSshInteractiveCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Void Function(
-          ffi.Pointer<ffi.Char> name,
-          ffi.Int name_len,
-          ffi.Pointer<ffi.Char> instruction,
-          ffi.Int instruction_len,
-          ffi.Int num_prompts,
-          ffi.Pointer<_LIBSSH2_USERAUTH_KBDINT_PROMPT> prompts,
-          ffi.Pointer<_LIBSSH2_USERAUTH_KBDINT_RESPONSE> responses,
-          ffi.Pointer<ffi.Pointer<ffi.Void>> abstract,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<CredentialSshInteractiveCbfunction>>;
+typedef CredentialSshInteractiveCbfunction =
+    ffi.Void Function(
+      ffi.Pointer<ffi.Char> name,
+      ffi.Int name_len,
+      ffi.Pointer<ffi.Char> instruction,
+      ffi.Int instruction_len,
+      ffi.Int num_prompts,
+      ffi.Pointer<LIBSSH2_USERAUTH_KBDINT_PROMPT> prompts,
+      ffi.Pointer<LIBSSH2_USERAUTH_KBDINT_RESPONSE> responses,
+      ffi.Pointer<ffi.Pointer<ffi.Void>> abstract,
+    );
+typedef Dartgit_credential_ssh_interactive_cbFunction =
+    void Function(
+      ffi.Pointer<ffi.Char> name,
+      int name_len,
+      ffi.Pointer<ffi.Char> instruction,
+      int instruction_len,
+      int num_prompts,
+      ffi.Pointer<LIBSSH2_USERAUTH_KBDINT_PROMPT> prompts,
+      ffi.Pointer<LIBSSH2_USERAUTH_KBDINT_RESPONSE> responses,
+      ffi.Pointer<ffi.Pointer<ffi.Void>> abstract,
+    );
 
 /// A ssh key from disk
 final class CredentialSshKey extends ffi.Struct {
@@ -16969,8 +17039,26 @@ final class DescribeOptions extends ffi.Struct {
     ..ref.show_commit_oid_as_fallback = show_commit_oid_as_fallback;
 }
 
+/// A struct that stores the result of a describe operation.
 final class DescribeResult extends ffi.Opaque {}
 
+/// The diff object that contains all individual file deltas.
+///
+/// A `diff` represents the cumulative list of differences between two
+/// snapshots of a repository (possibly filtered by a set of file name
+/// patterns).
+///
+/// Calculating diffs is generally done in two phases: building a list of
+/// diffs then traversing it. This makes is easier to share logic across
+/// the various types of diffs (tree vs tree, workdir vs index, etc.), and
+/// also allows you to insert optional diff post-processing phases,
+/// such as rename detection, in between the steps. When you are done with
+/// a diff object, it must be freed.
+///
+/// This is an opaque structure which will be allocated by one of the diff
+/// generator functions below (such as `diff_tree_to_tree`). You are
+/// responsible for releasing the object memory when done, using the
+/// `diff_free()` function.
 final class Diff extends ffi.Opaque {}
 
 /// Structure describing the binary contents of a diff.
@@ -17004,16 +17092,19 @@ final class DiffBinary extends ffi.Struct {
 /// @param binary the binary content
 /// @param payload the user-specified callback payload
 /// @return 0 or an error code
-typedef DiffBinaryCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<DiffDelta> delta,
-          ffi.Pointer<DiffBinary> binary,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef DiffBinaryCb = ffi.Pointer<ffi.NativeFunction<DiffBinaryCbfunction>>;
+typedef DiffBinaryCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<DiffDelta> delta,
+      ffi.Pointer<DiffBinary> binary,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_diff_binary_cbFunction =
+    int Function(
+      ffi.Pointer<DiffDelta> delta,
+      ffi.Pointer<DiffBinary> binary,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// The contents of one of the files in a binary diff.
 final class DiffBinaryFile extends ffi.Struct {
@@ -17152,16 +17243,19 @@ final class DiffFile extends ffi.Struct {
 /// @param progress Goes from 0 to 1 over the diff
 /// @param payload User-specified pointer from foreach function
 /// @return 0 or an error code
-typedef DiffFileCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<DiffDelta> delta,
-          ffi.Float progress,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef DiffFileCb = ffi.Pointer<ffi.NativeFunction<DiffFileCbfunction>>;
+typedef DiffFileCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<DiffDelta> delta,
+      ffi.Float progress,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_diff_file_cbFunction =
+    int Function(
+      ffi.Pointer<DiffDelta> delta,
+      double progress,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Control behavior of rename and copy detection
 ///
@@ -17326,16 +17420,19 @@ final class DiffHunk extends ffi.Struct {
 /// @param hunk the hunk
 /// @param payload the user-specified callback payload
 /// @return 0 or an error code
-typedef DiffHunkCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<DiffDelta> delta,
-          ffi.Pointer<DiffHunk> hunk,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef DiffHunkCb = ffi.Pointer<ffi.NativeFunction<DiffHunkCbfunction>>;
+typedef DiffHunkCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<DiffDelta> delta,
+      ffi.Pointer<DiffHunk> hunk,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_diff_hunk_cbFunction =
+    int Function(
+      ffi.Pointer<DiffDelta> delta,
+      ffi.Pointer<DiffHunk> hunk,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Structure describing a line (or data span) of a diff.
 ///
@@ -17405,17 +17502,21 @@ final class DiffLine extends ffi.Struct {
 /// @param line the line in the diff
 /// @param payload the user-specified callback payload
 /// @return 0 or an error code
-typedef DiffLineCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<DiffDelta> delta,
-          ffi.Pointer<DiffHunk> hunk,
-          ffi.Pointer<DiffLine> line,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef DiffLineCb = ffi.Pointer<ffi.NativeFunction<DiffLineCbfunction>>;
+typedef DiffLineCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<DiffDelta> delta,
+      ffi.Pointer<DiffHunk> hunk,
+      ffi.Pointer<DiffLine> line,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_diff_line_cbFunction =
+    int Function(
+      ffi.Pointer<DiffDelta> delta,
+      ffi.Pointer<DiffHunk> hunk,
+      ffi.Pointer<DiffLine> line,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Diff notification callback function.
 ///
@@ -17434,17 +17535,21 @@ typedef DiffLineCb =
 /// @param matched_pathspec the pathspec
 /// @param payload the user-specified callback payload
 /// @return 0 on success, 1 to skip this delta, or an error code
-typedef DiffNotifyCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<Diff> diff_so_far,
-          ffi.Pointer<DiffDelta> delta_to_add,
-          ffi.Pointer<ffi.Char> matched_pathspec,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef DiffNotifyCb = ffi.Pointer<ffi.NativeFunction<DiffNotifyCbfunction>>;
+typedef DiffNotifyCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<Diff> diff_so_far,
+      ffi.Pointer<DiffDelta> delta_to_add,
+      ffi.Pointer<ffi.Char> matched_pathspec,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_diff_notify_cbFunction =
+    int Function(
+      ffi.Pointer<Diff> diff_so_far,
+      ffi.Pointer<DiffDelta> delta_to_add,
+      ffi.Pointer<ffi.Char> matched_pathspec,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Structure describing options about how the diff should be executed.
 ///
@@ -17577,16 +17682,21 @@ final class DiffPatchidOptions extends ffi.Struct {
 /// @param payload the user-specified callback payload
 /// @return 0 or an error code
 typedef DiffProgressCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<Diff> diff_so_far,
-          ffi.Pointer<ffi.Char> old_path,
-          ffi.Pointer<ffi.Char> new_path,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<DiffProgressCbfunction>>;
+typedef DiffProgressCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<Diff> diff_so_far,
+      ffi.Pointer<ffi.Char> old_path,
+      ffi.Pointer<ffi.Char> new_path,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_diff_progress_cbFunction =
+    int Function(
+      ffi.Pointer<Diff> diff_so_far,
+      ffi.Pointer<ffi.Char> old_path,
+      ffi.Pointer<ffi.Char> new_path,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Pluggable similarity metric
 final class DiffSimilarityMetric extends ffi.Struct {
@@ -17693,6 +17803,9 @@ final class DiffSimilarityMetric extends ffi.Struct {
     ..ref.payload = payload;
 }
 
+/// This is an opaque structure which is allocated by `diff_get_stats`.
+/// You are responsible for releasing the object memory when done, using the
+/// `diff_stats_free()` function.
 final class DiffStats extends ffi.Opaque {}
 
 /// Options for controlling the formatting of the generated e-mail.
@@ -17810,8 +17923,29 @@ final class FetchOptions extends ffi.Struct {
   external Strarray custom_headers;
 }
 
+/// A filter that can transform file data
+///
+/// This represents a filter that can be used to transform or even replace
+/// file data.  Libgit2 includes one built in filter and it is possible to
+/// write your own (see git2/sys/filter.h for information on that).
+///
+/// The two builtin filters are:
+///
+/// * "crlf" which uses the complex rules with the "text", "eol", and
+/// "crlf" file attributes to decide how to convert between LF and CRLF
+/// line endings
+/// * "ident" which replaces "$Id$" in a blob with "$Id: <blob OID>$" upon
+/// checkout and replaced "$Id: <anything>$" with "$Id$" on checkin.
 final class Filter extends ffi.Opaque {}
 
+/// List of filters to be applied
+///
+/// This represents a list of filters to be applied to a file / blob.  You
+/// can build the list with one call, apply it with another, and dispose it
+/// with a third.  In typical usage, there are not many occasions where a
+/// filter_list is needed directly since the library will generally
+/// handle conversions for you, but it can be convenient to be able to
+/// build and apply the list sometimes.
 final class FilterList extends ffi.Opaque {}
 
 /// Filtering options
@@ -18095,18 +18229,19 @@ const int GIT_WORKTREE_ADD_OPTIONS_VERSION = 1;
 const int GIT_WORKTREE_PRUNE_OPTIONS_VERSION = 1;
 
 /// Callback for listing the remote heads
-typedef HeadlistCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<RemoteHead> rhead,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef HeadlistCb = ffi.Pointer<ffi.NativeFunction<HeadlistCbfunction>>;
+typedef HeadlistCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<RemoteHead> rhead,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_headlist_cbFunction =
+    int Function(ffi.Pointer<RemoteHead> rhead, ffi.Pointer<ffi.Void> payload);
 
+/// Memory representation of an index file.
 final class Index extends ffi.Opaque {}
 
+/// An iterator for conflicts in the index.
 final class IndexConflictIterator extends ffi.Opaque {}
 
 /// In-memory representation of a file entry in the index.
@@ -18162,6 +18297,7 @@ final class IndexEntry extends ffi.Struct {
   external ffi.Pointer<ffi.Char> path;
 }
 
+/// An iterator for entries in the index.
 final class IndexIterator extends ffi.Opaque {}
 
 /// Callback for APIs that add/remove/update files matching pathspec
@@ -18171,15 +18307,19 @@ final class IndexIterator extends ffi.Opaque {}
 /// @param payload the user-specified payload
 /// @return 0 to continue with the index operation, positive number to         skip this file for the index operation, negative number on failure
 typedef IndexMatchedPathCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ffi.Char> path,
-          ffi.Pointer<ffi.Char> matched_pathspec,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<IndexMatchedPathCbfunction>>;
+typedef IndexMatchedPathCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Char> path,
+      ffi.Pointer<ffi.Char> matched_pathspec,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_index_matched_path_cbFunction =
+    int Function(
+      ffi.Pointer<ffi.Char> path,
+      ffi.Pointer<ffi.Char> matched_pathspec,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Time structure used in a git index entry
 final class IndexTime extends ffi.Struct {
@@ -18198,6 +18338,7 @@ final class IndexTime extends ffi.Struct {
     ..ref.nanoseconds = nanoseconds;
 }
 
+/// A git indexer object
 final class Indexer extends ffi.Opaque {}
 
 /// Options for indexer configuration
@@ -18287,14 +18428,17 @@ final class IndexerProgress extends ffi.Struct {
 /// @param payload Payload provided by caller
 /// @return 0 on success or an error code
 typedef IndexerProgressCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<IndexerProgress> stats,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<IndexerProgressCbfunction>>;
+typedef IndexerProgressCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<IndexerProgress> stats,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_indexer_progress_cbFunction =
+    int Function(
+      ffi.Pointer<IndexerProgress> stats,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 final class Iterator extends ffi.Opaque {}
 
@@ -18324,6 +18468,11 @@ const int LIBGIT2_VER_PRERELEASE = 0;
 
 const int LIBGIT2_VER_REVISION = 3;
 
+typedef LIBSSH2_SESSION = _LIBSSH2_SESSION;
+typedef LIBSSH2_USERAUTH_KBDINT_PROMPT = _LIBSSH2_USERAUTH_KBDINT_PROMPT;
+typedef LIBSSH2_USERAUTH_KBDINT_RESPONSE = _LIBSSH2_USERAUTH_KBDINT_RESPONSE;
+
+/// Representation of .mailmap file state.
 final class Mailmap extends ffi.Opaque {}
 
 /// The file inputs to `merge_file`.  Callers should populate the
@@ -18563,8 +18712,10 @@ final class MessageTrailerArray extends ffi.Struct {
     ..ref._trailer_block = $trailer_block;
 }
 
+/// a writer for multi-pack-index files.
 final class MidxWriter extends ffi.Opaque {}
 
+/// Representation of a git note
 final class Note extends ffi.Opaque {}
 
 /// Callback for note_foreach.
@@ -18573,28 +18724,35 @@ final class Note extends ffi.Opaque {}
 /// @param annotated_object_id the id of the object being annotated
 /// @param payload user-specified data to the foreach function
 /// @return 0 on success, or a negative number on failure
-typedef NoteForeachCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<Oid> blob_id,
-          ffi.Pointer<Oid> annotated_object_id,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef NoteForeachCb = ffi.Pointer<ffi.NativeFunction<NoteForeachCbfunction>>;
+typedef NoteForeachCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<Oid> blob_id,
+      ffi.Pointer<Oid> annotated_object_id,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_note_foreach_cbFunction =
+    int Function(
+      ffi.Pointer<Oid> blob_id,
+      ffi.Pointer<Oid> annotated_object_id,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// note iterator
 typedef NoteIterator = Iterator;
 
+/// Representation of a generic object in a repository
 final class Object extends ffi.Opaque {}
 
 /// The maximum size of an object
 typedef ObjectSizeT = ffi.Uint64;
-typedef DartObjectSizeT = int;
+typedef Dartgit_object_size_t = int;
 
+/// An object database stores the objects (commit, trees, blobs, tags,
+/// etc) for a repository.
 final class Odb extends ffi.Opaque {}
 
+/// A custom backend in an ODB
 final class OdbBackend extends ffi.Opaque {}
 
 /// Options for configuring a loose object backend.
@@ -18696,13 +18854,13 @@ final class OdbExpandId extends ffi.Struct {
 /// @param id an id of an object in the object database
 /// @param payload the payload from the initial call to odb_foreach
 /// @return 0 on success, or an error code
-typedef OdbForeachCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(ffi.Pointer<Oid> id, ffi.Pointer<ffi.Void> payload)
-      >
-    >;
+typedef OdbForeachCb = ffi.Pointer<ffi.NativeFunction<OdbForeachCbfunction>>;
+typedef OdbForeachCbfunction =
+    ffi.Int Function(ffi.Pointer<Oid> id, ffi.Pointer<ffi.Void> payload);
+typedef Dartgit_odb_foreach_cbFunction =
+    int Function(ffi.Pointer<Oid> id, ffi.Pointer<ffi.Void> payload);
 
+/// A "raw" object read from the object database.
 final class OdbObject extends ffi.Opaque {}
 
 /// Options for configuring a loose object backend.
@@ -18911,7 +19069,7 @@ final class OdbWritepack extends ffi.Struct {
 }
 
 typedef OffT = ffi.Int64;
-typedef DartOffT = int;
+typedef Dartgit_off_t = int;
 
 /// Unique identity of any object (commit, tree, blob, tag).
 final class Oid extends ffi.Struct {
@@ -18920,6 +19078,7 @@ final class Oid extends ffi.Struct {
   external ffi.Array<ffi.UnsignedChar> id;
 }
 
+/// OID Shortener object
 final class OidShorten extends ffi.Opaque {}
 
 /// Array of object ids
@@ -18938,6 +19097,7 @@ final class Oidarray extends ffi.Struct {
     ..ref.count = count;
 }
 
+/// Representation of a git packbuilder
 final class Packbuilder extends ffi.Opaque {}
 
 /// Callback used to iterate over packed objects
@@ -18949,15 +19109,19 @@ final class Packbuilder extends ffi.Opaque {}
 /// @param payload Payload passed to packbuilder_foreach
 /// @return non-zero to terminate the iteration
 typedef PackbuilderForeachCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ffi.Void> buf,
-          ffi.Size size,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<PackbuilderForeachCbfunction>>;
+typedef PackbuilderForeachCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Void> buf,
+      ffi.Size size,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_packbuilder_foreach_cbFunction =
+    int Function(
+      ffi.Pointer<ffi.Void> buf,
+      int size,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Packbuilder progress notification function.
 ///
@@ -18967,21 +19131,32 @@ typedef PackbuilderForeachCb =
 /// @param payload the callback payload
 /// @return 0 on success or an error code
 typedef PackbuilderProgress =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Int stage,
-          ffi.Uint32 current,
-          ffi.Uint32 total,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<PackbuilderProgressfunction>>;
+typedef PackbuilderProgressfunction =
+    ffi.Int Function(
+      ffi.Int stage,
+      ffi.Uint32 current,
+      ffi.Uint32 total,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_packbuilder_progressFunction =
+    int Function(
+      int stage,
+      int current,
+      int total,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
+/// The diff patch is used to store all the text diffs for a delta.
+///
+/// You can easily loop over the content of patches and get information about
+/// them.
 final class Patch extends ffi.Opaque {}
 
+/// Compiled pathspec
 final class Pathspec extends ffi.Opaque {}
 
+/// List of filenames matching a pathspec
 final class PathspecMatchList extends ffi.Opaque {}
 
 /// Options for connecting through a proxy
@@ -19035,6 +19210,8 @@ final class ProxyOptions extends ffi.Struct {
     ..ref.payload = payload;
 }
 
+/// Preparation for a push operation. Can be used to configure what to
+/// push and the level of parallelism of the packfile builder.
 final class Push extends ffi.Opaque {}
 
 /// Callback used to inform of upcoming updates.
@@ -19045,15 +19222,19 @@ final class Push extends ffi.Opaque {}
 /// @param payload Payload provided by the caller
 /// @return 0 or an error code to stop the push
 typedef PushNegotiation =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ffi.Pointer<PushUpdate>> updates,
-          ffi.Size len,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<PushNegotiationfunction>>;
+typedef PushNegotiationfunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Pointer<PushUpdate>> updates,
+      ffi.Size len,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_push_negotiationFunction =
+    int Function(
+      ffi.Pointer<ffi.Pointer<PushUpdate>> updates,
+      int len,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Controls the behavior of a push object.
 final class PushOptions extends ffi.Struct {
@@ -19107,16 +19288,21 @@ typedef PushTransferProgress = PushTransferProgressCb;
 /// @param payload The user-specified payload callback
 /// @return 0 or an error code to stop the transfer
 typedef PushTransferProgressCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.UnsignedInt current,
-          ffi.UnsignedInt total,
-          ffi.Size bytes,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<PushTransferProgressCbfunction>>;
+typedef PushTransferProgressCbfunction =
+    ffi.Int Function(
+      ffi.UnsignedInt current,
+      ffi.UnsignedInt total,
+      ffi.Size bytes,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_push_transfer_progress_cbFunction =
+    int Function(
+      int current,
+      int total,
+      int bytes,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Represents an update which will be performed on the remote during push
 final class PushUpdate extends ffi.Struct {
@@ -19144,16 +19330,21 @@ final class PushUpdate extends ffi.Struct {
 /// @param data data provided by the caller
 /// @return 0 on success, otherwise an error
 typedef PushUpdateReferenceCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ffi.Char> refname,
-          ffi.Pointer<ffi.Char> status,
-          ffi.Pointer<ffi.Void> data,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<PushUpdateReferenceCbfunction>>;
+typedef PushUpdateReferenceCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Char> refname,
+      ffi.Pointer<ffi.Char> status,
+      ffi.Pointer<ffi.Void> data,
+    );
+typedef Dartgit_push_update_reference_cbFunction =
+    int Function(
+      ffi.Pointer<ffi.Char> refname,
+      ffi.Pointer<ffi.Char> status,
+      ffi.Pointer<ffi.Void> data,
+    );
 
+/// Representation of a rebase
 final class Rebase extends ffi.Opaque {}
 
 /// A rebase operation
@@ -19257,10 +19448,13 @@ final class RebaseOptions extends ffi.Struct {
   external ffi.Pointer<ffi.Void> payload;
 }
 
+/// An open refs database handle.
 final class Refdb extends ffi.Opaque {}
 
+/// A custom backend for refs
 final class RefdbBackend extends ffi.Opaque {}
 
+/// In-memory representation of a reference.
 final class Reference extends ffi.Opaque {}
 
 /// Callback used to iterate over references
@@ -19271,14 +19465,17 @@ final class Reference extends ffi.Opaque {}
 /// @param payload Payload passed to reference_foreach
 /// @return non-zero to terminate the iteration
 typedef ReferenceForeachCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<Reference> reference,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<ReferenceForeachCbfunction>>;
+typedef ReferenceForeachCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<Reference> reference,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_reference_foreach_cbFunction =
+    int Function(
+      ffi.Pointer<Reference> reference,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Callback used to iterate over reference names
 ///
@@ -19288,23 +19485,27 @@ typedef ReferenceForeachCb =
 /// @param payload Payload passed to reference_foreach_name
 /// @return non-zero to terminate the iteration
 typedef ReferenceForeachNameCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ffi.Char> name,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<ReferenceForeachNameCbfunction>>;
+typedef ReferenceForeachNameCbfunction =
+    ffi.Int Function(ffi.Pointer<ffi.Char> name, ffi.Pointer<ffi.Void> payload);
+typedef Dartgit_reference_foreach_name_cbFunction =
+    int Function(ffi.Pointer<ffi.Char> name, ffi.Pointer<ffi.Void> payload);
 
+/// Iterator for references
 final class ReferenceIterator extends ffi.Opaque {}
 
+/// Representation of a reference log
 final class Reflog extends ffi.Opaque {}
 
+/// Representation of a reference log entry
 final class ReflogEntry extends ffi.Opaque {}
 
+/// A refspec specifies the mapping between remote and local reference
+/// names when fetch or pushing.
 final class Refspec extends ffi.Opaque {}
 
+/// Git's idea of a remote repository. A remote can be anonymous (in
+/// which case it does not have backing configuration entries).
 final class Remote extends ffi.Opaque {}
 
 /// The callback settings structure
@@ -19525,17 +19726,23 @@ final class RemoteConnectOptions extends ffi.Struct {
 /// @param payload an opaque payload
 /// @return 0, GIT_EINVALIDSPEC, GIT_EEXISTS or an error code
 typedef RemoteCreateCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ffi.Pointer<Remote>> out,
-          ffi.Pointer<Repository> repo,
-          ffi.Pointer<ffi.Char> name,
-          ffi.Pointer<ffi.Char> url,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<RemoteCreateCbfunction>>;
+typedef RemoteCreateCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Pointer<Remote>> out,
+      ffi.Pointer<Repository> repo,
+      ffi.Pointer<ffi.Char> name,
+      ffi.Pointer<ffi.Char> url,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_remote_create_cbFunction =
+    int Function(
+      ffi.Pointer<ffi.Pointer<Remote>> out,
+      ffi.Pointer<Repository> repo,
+      ffi.Pointer<ffi.Char> name,
+      ffi.Pointer<ffi.Char> url,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Remote creation options structure
 ///
@@ -19600,17 +19807,22 @@ final class RemoteHead extends ffi.Struct {
 /// @param direction GIT_DIRECTION_FETCH or GIT_DIRECTION_PUSH
 /// @param payload Payload provided by the caller
 /// @return 0 on success, or an error
-typedef RemoteReadyCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<Remote> remote,
-          ffi.Int direction,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef RemoteReadyCb = ffi.Pointer<ffi.NativeFunction<RemoteReadyCbfunction>>;
+typedef RemoteReadyCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<Remote> remote,
+      ffi.Int direction,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_remote_ready_cbFunction =
+    int Function(
+      ffi.Pointer<Remote> remote,
+      int direction,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
+/// Representation of an existing git repository,
+/// including all its object contents
 final class Repository extends ffi.Opaque {}
 
 /// The signature of a function matching repository_init, with an
@@ -19626,16 +19838,21 @@ final class Repository extends ffi.Opaque {}
 /// @param payload payload specified by the options
 /// @return 0, or a negative value to indicate error
 typedef RepositoryCreateCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ffi.Pointer<Repository>> out,
-          ffi.Pointer<ffi.Char> path,
-          ffi.Int bare,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<RepositoryCreateCbfunction>>;
+typedef RepositoryCreateCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Pointer<Repository>> out,
+      ffi.Pointer<ffi.Char> path,
+      ffi.Int bare,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_repository_create_cbFunction =
+    int Function(
+      ffi.Pointer<ffi.Pointer<Repository>> out,
+      ffi.Pointer<ffi.Char> path,
+      int bare,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Callback used to iterate over each FETCH_HEAD entry
 ///
@@ -19648,17 +19865,23 @@ typedef RepositoryCreateCb =
 /// @param payload Payload passed to repository_fetchhead_foreach
 /// @return non-zero to terminate the iteration
 typedef RepositoryFetchheadForeachCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ffi.Char> ref_name,
-          ffi.Pointer<ffi.Char> remote_url,
-          ffi.Pointer<Oid> oid,
-          ffi.UnsignedInt is_merge,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<RepositoryFetchheadForeachCbfunction>>;
+typedef RepositoryFetchheadForeachCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Char> ref_name,
+      ffi.Pointer<ffi.Char> remote_url,
+      ffi.Pointer<Oid> oid,
+      ffi.UnsignedInt is_merge,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_repository_fetchhead_foreach_cbFunction =
+    int Function(
+      ffi.Pointer<ffi.Char> ref_name,
+      ffi.Pointer<ffi.Char> remote_url,
+      ffi.Pointer<Oid> oid,
+      int is_merge,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Extended options structure for `repository_init_ext`.
 ///
@@ -19733,11 +19956,11 @@ final class RepositoryInitOptions extends ffi.Struct {
 /// @param payload Payload passed to repository_mergehead_foreach
 /// @return non-zero to terminate the iteration
 typedef RepositoryMergeheadForeachCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(ffi.Pointer<Oid> oid, ffi.Pointer<ffi.Void> payload)
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<RepositoryMergeheadForeachCbfunction>>;
+typedef RepositoryMergeheadForeachCbfunction =
+    ffi.Int Function(ffi.Pointer<Oid> oid, ffi.Pointer<ffi.Void> payload);
+typedef Dartgit_repository_mergehead_foreach_cbFunction =
+    int Function(ffi.Pointer<Oid> oid, ffi.Pointer<ffi.Void> payload);
 
 /// Options for revert
 final class RevertOptions extends ffi.Struct {
@@ -19778,6 +20001,7 @@ final class Revspec extends ffi.Struct {
     ..ref.flags = flags;
 }
 
+/// Representation of an in-progress walk through the commits in a repo
 final class Revwalk extends ffi.Opaque {}
 
 /// This is a callback function that user can provide to hide a
@@ -19787,15 +20011,11 @@ final class Revwalk extends ffi.Opaque {}
 /// @param commit_id oid of Commit
 /// @param payload User-specified pointer to data to be passed as data payload
 /// @return non-zero to hide the commmit and it parent.
-typedef RevwalkHideCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<Oid> commit_id,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef RevwalkHideCb = ffi.Pointer<ffi.NativeFunction<RevwalkHideCbfunction>>;
+typedef RevwalkHideCbfunction =
+    ffi.Int Function(ffi.Pointer<Oid> commit_id, ffi.Pointer<ffi.Void> payload);
+typedef Dartgit_revwalk_hide_cbFunction =
+    int Function(ffi.Pointer<Oid> commit_id, ffi.Pointer<ffi.Void> payload);
 
 /// An action signature (e.g. for committers, taggers, etc)
 final class Signature extends ffi.Struct {
@@ -19838,14 +20058,11 @@ final class StashApplyOptions extends ffi.Struct {
 /// @param payload the user-specified payload to the apply function
 /// @return 0 on success, -1 on error
 typedef StashApplyProgressCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.UnsignedInt progress,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<StashApplyProgressCbfunction>>;
+typedef StashApplyProgressCbfunction =
+    ffi.Int Function(ffi.UnsignedInt progress, ffi.Pointer<ffi.Void> payload);
+typedef Dartgit_stash_apply_progress_cbFunction =
+    int Function(StashApplyProgress progress, ffi.Pointer<ffi.Void> payload);
 
 /// This is a callback function you can provide to iterate over all the
 /// stashed states that will be invoked per entry.
@@ -19856,17 +20073,21 @@ typedef StashApplyProgressCb =
 /// @param stash_id The commit oid of the stashed state.
 /// @param payload Extra parameter to callback function.
 /// @return 0 to continue iterating or non-zero to stop.
-typedef StashCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Size index,
-          ffi.Pointer<ffi.Char> message,
-          ffi.Pointer<Oid> stash_id,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef StashCb = ffi.Pointer<ffi.NativeFunction<StashCbfunction>>;
+typedef StashCbfunction =
+    ffi.Int Function(
+      ffi.Size index,
+      ffi.Pointer<ffi.Char> message,
+      ffi.Pointer<Oid> stash_id,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_stash_cbFunction =
+    int Function(
+      int index,
+      ffi.Pointer<ffi.Char> message,
+      ffi.Pointer<Oid> stash_id,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Stash save options structure
 ///
@@ -19896,16 +20117,19 @@ final class StashSaveOptions extends ffi.Struct {
 /// @param status_flags the `status_t` values for file's status
 /// @param payload the user-specified payload to the foreach function
 /// @return 0 on success, or a negative number on failure
-typedef StatusCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ffi.Char> path,
-          ffi.UnsignedInt status_flags,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef StatusCb = ffi.Pointer<ffi.NativeFunction<StatusCbfunction>>;
+typedef StatusCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Char> path,
+      ffi.UnsignedInt status_flags,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_status_cbFunction =
+    int Function(
+      ffi.Pointer<ffi.Char> path,
+      int status_flags,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// A status entry, providing the differences between the file as it exists
 /// in HEAD and the index, and providing the differences between the index
@@ -19941,6 +20165,7 @@ final class StatusEntry extends ffi.Struct {
     ..ref.index_to_workdir = index_to_workdir;
 }
 
+/// Representation of a status collection
 final class StatusList extends ffi.Opaque {}
 
 /// Options to control how `status_foreach_ext()` will issue callbacks.
@@ -20000,6 +20225,7 @@ final class Strarray extends ffi.Struct {
     ..ref.count = count;
 }
 
+/// Opaque structure representing a submodule.
 final class Submodule extends ffi.Opaque {}
 
 /// Function pointer to receive each submodule
@@ -20008,16 +20234,19 @@ final class Submodule extends ffi.Opaque {}
 /// @param name name of the submodule
 /// @param payload value you passed to the foreach function as payload
 /// @return 0 on success or error code
-typedef SubmoduleCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<Submodule> sm,
-          ffi.Pointer<ffi.Char> name,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef SubmoduleCb = ffi.Pointer<ffi.NativeFunction<SubmoduleCbfunction>>;
+typedef SubmoduleCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<Submodule> sm,
+      ffi.Pointer<ffi.Char> name,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_submodule_cbFunction =
+    int Function(
+      ffi.Pointer<Submodule> sm,
+      ffi.Pointer<ffi.Char> name,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Submodule update options structure
 ///
@@ -20044,6 +20273,7 @@ final class SubmoduleUpdateOptions extends ffi.Struct {
   external int allow_fetch;
 }
 
+/// Parsed representation of a tag object.
 final class Tag extends ffi.Opaque {}
 
 /// Callback used to iterate over tag names
@@ -20054,16 +20284,19 @@ final class Tag extends ffi.Opaque {}
 /// @param oid The tag's OID
 /// @param payload Payload passed to tag_foreach
 /// @return non-zero to terminate the iteration
-typedef TagForeachCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ffi.Char> name,
-          ffi.Pointer<Oid> oid,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef TagForeachCb = ffi.Pointer<ffi.NativeFunction<TagForeachCbfunction>>;
+typedef TagForeachCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Char> name,
+      ffi.Pointer<Oid> oid,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_tag_foreach_cbFunction =
+    int Function(
+      ffi.Pointer<ffi.Char> name,
+      ffi.Pointer<Oid> oid,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Time in a signature
 final class Time extends ffi.Struct {
@@ -20091,7 +20324,7 @@ final class Time extends ffi.Struct {
 }
 
 typedef TimeT = ffi.Int64;
-typedef DartTimeT = int;
+typedef Dartgit_time_t = int;
 
 /// @name Deprecated Trace Callback Types
 ///
@@ -20108,13 +20341,13 @@ typedef TraceCallback = TraceCb;
 ///
 /// @param level the trace level
 /// @param msg the trace message
-typedef TraceCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Void Function(ffi.UnsignedInt level, ffi.Pointer<ffi.Char> msg)
-      >
-    >;
+typedef TraceCb = ffi.Pointer<ffi.NativeFunction<TraceCbfunction>>;
+typedef TraceCbfunction =
+    ffi.Void Function(ffi.UnsignedInt level, ffi.Pointer<ffi.Char> msg);
+typedef Dartgit_trace_cbFunction =
+    void Function(TraceLevel level, ffi.Pointer<ffi.Char> msg);
 
+/// Transactional interface to references
 final class Transaction extends ffi.Opaque {}
 
 /// This structure is used to provide callers information about the
@@ -20130,6 +20363,8 @@ typedef TransferProgress = IndexerProgress;
 /// type definition at this time.
 typedef TransferProgressCb = IndexerProgressCb;
 
+/// Interface which represents a transport to communicate with a
+/// remote.
 final class Transport extends ffi.Opaque {}
 
 /// Signature of a function which creates a transport.
@@ -20138,16 +20373,19 @@ final class Transport extends ffi.Opaque {}
 /// @param owner the owner for the transport
 /// @param param the param to the transport creation
 /// @return 0 on success or an error code
-typedef TransportCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ffi.Pointer<Transport>> out,
-          ffi.Pointer<Remote> owner,
-          ffi.Pointer<ffi.Void> param,
-        )
-      >
-    >;
+typedef TransportCb = ffi.Pointer<ffi.NativeFunction<TransportCbfunction>>;
+typedef TransportCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Pointer<Transport>> out,
+      ffi.Pointer<Remote> owner,
+      ffi.Pointer<ffi.Void> param,
+    );
+typedef Dartgit_transport_cbFunction =
+    int Function(
+      ffi.Pointer<ffi.Pointer<Transport>> out,
+      ffi.Pointer<Remote> owner,
+      ffi.Pointer<ffi.Void> param,
+    );
 
 /// Callback for the user's custom certificate checks.
 ///
@@ -20160,16 +20398,21 @@ typedef TransportCb =
 /// or > 0 to indicate that the callback refused to act and that
 /// the existing validity determination should be honored
 typedef TransportCertificateCheckCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<Cert> cert,
-          ffi.Int valid,
-          ffi.Pointer<ffi.Char> host,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<TransportCertificateCheckCbfunction>>;
+typedef TransportCertificateCheckCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<Cert> cert,
+      ffi.Int valid,
+      ffi.Pointer<ffi.Char> host,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_transport_certificate_check_cbFunction =
+    int Function(
+      ffi.Pointer<Cert> cert,
+      int valid,
+      ffi.Pointer<ffi.Char> host,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Callback for messages received by the transport.
 ///
@@ -20180,18 +20423,24 @@ typedef TransportCertificateCheckCb =
 /// @param payload Payload provided by the caller
 /// @return 0 on success or an error code
 typedef TransportMessageCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ffi.Char> str,
-          ffi.Int len,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<TransportMessageCbfunction>>;
+typedef TransportMessageCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Char> str,
+      ffi.Int len,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_transport_message_cbFunction =
+    int Function(
+      ffi.Pointer<ffi.Char> str,
+      int len,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
+/// Representation of a tree object.
 final class Tree extends ffi.Opaque {}
 
+/// Representation of each one of the entries in a tree object.
 final class TreeEntry extends ffi.Opaque {}
 
 /// An action to perform during the update of a tree
@@ -20217,6 +20466,7 @@ final class TreeUpdate extends ffi.Struct {
   external ffi.Pointer<ffi.Char> path;
 }
 
+/// Constructor for in-memory trees
 final class Treebuilder extends ffi.Opaque {}
 
 /// Callback for treebuilder_filter
@@ -20229,14 +20479,14 @@ final class Treebuilder extends ffi.Opaque {}
 /// @param payload the payload from the caller
 /// @return 0 to do nothing, non-zero to remove the entry
 typedef TreebuilderFilterCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<TreeEntry> entry,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+    ffi.Pointer<ffi.NativeFunction<TreebuilderFilterCbfunction>>;
+typedef TreebuilderFilterCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<TreeEntry> entry,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_treebuilder_filter_cbFunction =
+    int Function(ffi.Pointer<TreeEntry> entry, ffi.Pointer<ffi.Void> payload);
 
 /// Callback for the tree traversal method.
 ///
@@ -20244,16 +20494,19 @@ typedef TreebuilderFilterCb =
 /// @param entry the tree entry
 /// @param payload the caller-provided callback payload
 /// @return a positive value to skip the entry, a negative value to stop the walk
-typedef TreewalkCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<ffi.Char> root,
-          ffi.Pointer<TreeEntry> entry,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef TreewalkCb = ffi.Pointer<ffi.NativeFunction<TreewalkCbfunction>>;
+typedef TreewalkCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Char> root,
+      ffi.Pointer<TreeEntry> entry,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_treewalk_cbFunction =
+    int Function(
+      ffi.Pointer<ffi.Char> root,
+      ffi.Pointer<TreeEntry> entry,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
 /// Callback to resolve URLs before connecting to remote
 ///
@@ -20266,18 +20519,23 @@ typedef TreewalkCb =
 /// @param payload Payload provided by the caller
 /// @return 0 on success, GIT_PASSTHROUGH or an error
 /// @deprecated Use `remote_set_instance_url`
-typedef UrlResolveCb =
-    ffi.Pointer<
-      ffi.NativeFunction<
-        ffi.Int Function(
-          ffi.Pointer<Buf> url_resolved,
-          ffi.Pointer<ffi.Char> url,
-          ffi.Int direction,
-          ffi.Pointer<ffi.Void> payload,
-        )
-      >
-    >;
+typedef UrlResolveCb = ffi.Pointer<ffi.NativeFunction<UrlResolveCbfunction>>;
+typedef UrlResolveCbfunction =
+    ffi.Int Function(
+      ffi.Pointer<Buf> url_resolved,
+      ffi.Pointer<ffi.Char> url,
+      ffi.Int direction,
+      ffi.Pointer<ffi.Void> payload,
+    );
+typedef Dartgit_url_resolve_cbFunction =
+    int Function(
+      ffi.Pointer<Buf> url_resolved,
+      ffi.Pointer<ffi.Char> url,
+      int direction,
+      ffi.Pointer<ffi.Void> payload,
+    );
 
+/// Representation of a working tree
 final class Worktree extends ffi.Opaque {}
 
 /// Worktree add options structure

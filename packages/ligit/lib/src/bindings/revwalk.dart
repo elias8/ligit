@@ -107,17 +107,16 @@ void Function()? revwalkAddHideCb(
     checkCode(git_revwalk_add_hide_cb(_walk(handle), nullptr.cast(), nullptr));
     return null;
   }
-  final cb =
-      NativeCallable<Int Function(Pointer<Oid>, Pointer<Void>)>.isolateLocal((
-        Pointer<Oid> id,
-        Pointer<Void> _,
-      ) {
-        try {
-          return callback(_oidBytes(id));
-        } on Object {
-          return -1;
-        }
-      }, exceptionalReturn: -1);
+  final cb = NativeCallable<RevwalkHideCbfunction>.isolateLocal((
+    Pointer<Oid> id,
+    Pointer<Void> _,
+  ) {
+    try {
+      return callback(_oidBytes(id));
+    } on Object {
+      return -1;
+    }
+  }, exceptionalReturn: -1);
   checkCode(
     git_revwalk_add_hide_cb(_walk(handle), cb.nativeFunction.cast(), nullptr),
   );

@@ -287,9 +287,7 @@ void diffForeach(
   using((arena) {
     final fileCb = onFile == null
         ? null
-        : NativeCallable<
-            Int Function(Pointer<DiffDelta>, Float, Pointer<Void>)
-          >.isolateLocal((
+        : NativeCallable<DiffFileCbfunction>.isolateLocal((
             Pointer<DiffDelta> delta,
             double progress,
             Pointer<Void> _,
@@ -302,9 +300,7 @@ void diffForeach(
           }, exceptionalReturn: -1);
     final hunkCb = onHunk == null
         ? null
-        : NativeCallable<
-            Int Function(Pointer<DiffDelta>, Pointer<DiffHunk>, Pointer<Void>)
-          >.isolateLocal((
+        : NativeCallable<DiffHunkCbfunction>.isolateLocal((
             Pointer<DiffDelta> delta,
             Pointer<DiffHunk> hunk,
             Pointer<Void> _,
@@ -317,14 +313,7 @@ void diffForeach(
           }, exceptionalReturn: -1);
     final lineCb = onLine == null
         ? null
-        : NativeCallable<
-            Int Function(
-              Pointer<DiffDelta>,
-              Pointer<DiffHunk>,
-              Pointer<DiffLine>,
-              Pointer<Void>,
-            )
-          >.isolateLocal((
+        : NativeCallable<DiffLineCbfunction>.isolateLocal((
             Pointer<DiffDelta> delta,
             Pointer<DiffHunk> hunk,
             Pointer<DiffLine> line,
@@ -570,12 +559,15 @@ void diffPrint(
   }
 }
 
-NativeCallable<Int Function(Pointer<DiffDelta>, Float, Pointer<Void>)>?
-_fileCallable(int Function(DiffDeltaRecord, double)? onFile) {
+NativeCallable<DiffFileCbfunction>? _fileCallable(
+  int Function(DiffDeltaRecord, double)? onFile,
+) {
   if (onFile == null) return null;
-  return NativeCallable<
-    Int Function(Pointer<DiffDelta>, Float, Pointer<Void>)
-  >.isolateLocal((Pointer<DiffDelta> delta, double progress, Pointer<Void> _) {
+  return NativeCallable<DiffFileCbfunction>.isolateLocal((
+    Pointer<DiffDelta> delta,
+    double progress,
+    Pointer<Void> _,
+  ) {
     try {
       return onFile(_readDelta(delta), progress);
     } on Object {
@@ -584,16 +576,11 @@ _fileCallable(int Function(DiffDeltaRecord, double)? onFile) {
   }, exceptionalReturn: -1);
 }
 
-NativeCallable<
-  Int Function(Pointer<DiffDelta>, Pointer<DiffHunk>, Pointer<Void>)
->?
-_hunkCallable(
+NativeCallable<DiffHunkCbfunction>? _hunkCallable(
   int Function(DiffDeltaRecord delta, DiffHunkRecord hunk)? onHunk,
 ) {
   if (onHunk == null) return null;
-  return NativeCallable<
-    Int Function(Pointer<DiffDelta>, Pointer<DiffHunk>, Pointer<Void>)
-  >.isolateLocal((
+  return NativeCallable<DiffHunkCbfunction>.isolateLocal((
     Pointer<DiffDelta> delta,
     Pointer<DiffHunk> hunk,
     Pointer<Void> _,
@@ -606,15 +593,7 @@ _hunkCallable(
   }, exceptionalReturn: -1);
 }
 
-NativeCallable<
-  Int Function(
-    Pointer<DiffDelta>,
-    Pointer<DiffHunk>,
-    Pointer<DiffLine>,
-    Pointer<Void>,
-  )
->?
-_lineCallable(
+NativeCallable<DiffLineCbfunction>? _lineCallable(
   int Function(
     DiffDeltaRecord delta,
     DiffHunkRecord? hunk,
@@ -623,14 +602,7 @@ _lineCallable(
   onLine,
 ) {
   if (onLine == null) return null;
-  return NativeCallable<
-    Int Function(
-      Pointer<DiffDelta>,
-      Pointer<DiffHunk>,
-      Pointer<DiffLine>,
-      Pointer<Void>,
-    )
-  >.isolateLocal((
+  return NativeCallable<DiffLineCbfunction>.isolateLocal((
     Pointer<DiffDelta> delta,
     Pointer<DiffHunk> hunk,
     Pointer<DiffLine> line,

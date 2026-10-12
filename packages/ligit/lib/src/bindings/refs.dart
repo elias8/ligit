@@ -388,18 +388,18 @@ int referenceForeach(
   int repoHandle,
   int Function(int referenceHandle) callback,
 ) {
-  final cb =
-      NativeCallable<
-        Int Function(Pointer<Reference>, Pointer<Void>)
-      >.isolateLocal((Pointer<Reference> ref, Pointer<Void> _) {
-        try {
-          return callback(ref.address);
-        } on Object {
-          return -1;
-        } finally {
-          git_reference_free(ref);
-        }
-      }, exceptionalReturn: -1);
+  final cb = NativeCallable<ReferenceForeachCbfunction>.isolateLocal((
+    Pointer<Reference> ref,
+    Pointer<Void> _,
+  ) {
+    try {
+      return callback(ref.address);
+    } on Object {
+      return -1;
+    } finally {
+      git_reference_free(ref);
+    }
+  }, exceptionalReturn: -1);
   try {
     final code = git_reference_foreach(
       _repo(repoHandle),
@@ -414,17 +414,16 @@ int referenceForeach(
 }
 
 int referenceForeachName(int repoHandle, int Function(String name) callback) {
-  final cb =
-      NativeCallable<Int Function(Pointer<Char>, Pointer<Void>)>.isolateLocal((
-        Pointer<Char> name,
-        Pointer<Void> _,
-      ) {
-        try {
-          return callback(name.cast<Utf8>().toDartString());
-        } on Object {
-          return -1;
-        }
-      }, exceptionalReturn: -1);
+  final cb = NativeCallable<ReferenceForeachNameCbfunction>.isolateLocal((
+    Pointer<Char> name,
+    Pointer<Void> _,
+  ) {
+    try {
+      return callback(name.cast<Utf8>().toDartString());
+    } on Object {
+      return -1;
+    }
+  }, exceptionalReturn: -1);
   try {
     final code = git_reference_foreach_name(
       _repo(repoHandle),
@@ -444,17 +443,16 @@ int referenceForeachGlob(
   int Function(String name) callback,
 ) {
   return using((arena) {
-    final cb =
-        NativeCallable<Int Function(Pointer<Char>, Pointer<Void>)>.isolateLocal(
-          (Pointer<Char> name, Pointer<Void> _) {
-            try {
-              return callback(name.cast<Utf8>().toDartString());
-            } on Object {
-              return -1;
-            }
-          },
-          exceptionalReturn: -1,
-        );
+    final cb = NativeCallable<ReferenceForeachNameCbfunction>.isolateLocal((
+      Pointer<Char> name,
+      Pointer<Void> _,
+    ) {
+      try {
+        return callback(name.cast<Utf8>().toDartString());
+      } on Object {
+        return -1;
+      }
+    }, exceptionalReturn: -1);
     try {
       final cGlob = glob.toNativeUtf8(allocator: arena).cast<Char>();
       final code = git_reference_foreach_glob(

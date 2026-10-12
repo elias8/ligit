@@ -90,29 +90,26 @@ int stashForeach(
   int repoHandle,
   int Function(int index, String message, Uint8List stashId) callback,
 ) {
-  final cb =
-      NativeCallable<
-        Int Function(Size, Pointer<Char>, Pointer<Oid>, Pointer<Void>)
-      >.isolateLocal((
-        int index,
-        Pointer<Char> message,
-        Pointer<Oid> oid,
-        Pointer<Void> _,
-      ) {
-        try {
-          final id = Uint8List(20);
-          for (var i = 0; i < 20; i++) {
-            id[i] = oid.ref.id[i];
-          }
-          return callback(
-            index,
-            message == nullptr ? '' : message.cast<Utf8>().toDartString(),
-            id,
-          );
-        } on Object {
-          return -1;
-        }
-      }, exceptionalReturn: -1);
+  final cb = NativeCallable<StashCbfunction>.isolateLocal((
+    int index,
+    Pointer<Char> message,
+    Pointer<Oid> oid,
+    Pointer<Void> _,
+  ) {
+    try {
+      final id = Uint8List(20);
+      for (var i = 0; i < 20; i++) {
+        id[i] = oid.ref.id[i];
+      }
+      return callback(
+        index,
+        message == nullptr ? '' : message.cast<Utf8>().toDartString(),
+        id,
+      );
+    } on Object {
+      return -1;
+    }
+  }, exceptionalReturn: -1);
   try {
     final code = git_stash_foreach(
       _repo(repoHandle),

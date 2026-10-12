@@ -94,17 +94,16 @@ Uint8List? odbExistsPrefix(int handle, Uint8List shortId, int length) {
 
 void odbForeach(int handle, int Function(Uint8List oid) onObject) {
   using((arena) {
-    final cb =
-        NativeCallable<Int Function(Pointer<Oid>, Pointer<Void>)>.isolateLocal((
-          Pointer<Oid> id,
-          Pointer<Void> _,
-        ) {
-          try {
-            return onObject(_oidFromStruct(id));
-          } on Object {
-            return -1;
-          }
-        }, exceptionalReturn: -1);
+    final cb = NativeCallable<OdbForeachCbfunction>.isolateLocal((
+      Pointer<Oid> id,
+      Pointer<Void> _,
+    ) {
+      try {
+        return onObject(_oidFromStruct(id));
+      } on Object {
+        return -1;
+      }
+    }, exceptionalReturn: -1);
     try {
       checkCode(
         git_odb_foreach(_odb(handle), cb.nativeFunction.cast(), nullptr),

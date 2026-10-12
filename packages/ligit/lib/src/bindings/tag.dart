@@ -262,16 +262,17 @@ int tagForeach(
   int repoHandle,
   int Function(String name, Uint8List targetId) callback,
 ) {
-  final cb =
-      NativeCallable<
-        Int Function(Pointer<Char>, Pointer<Oid>, Pointer<Void>)
-      >.isolateLocal((Pointer<Char> name, Pointer<Oid> oid, Pointer<Void> _) {
-        try {
-          return callback(name.cast<Utf8>().toDartString(), _oidBytes(oid));
-        } on Object {
-          return -1;
-        }
-      }, exceptionalReturn: -1);
+  final cb = NativeCallable<TagForeachCbfunction>.isolateLocal((
+    Pointer<Char> name,
+    Pointer<Oid> oid,
+    Pointer<Void> _,
+  ) {
+    try {
+      return callback(name.cast<Utf8>().toDartString(), _oidBytes(oid));
+    } on Object {
+      return -1;
+    }
+  }, exceptionalReturn: -1);
   try {
     final code = git_tag_foreach(
       _repo(repoHandle),

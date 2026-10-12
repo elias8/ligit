@@ -73,32 +73,32 @@ void _runApply(
     checkCode(git_apply_options_init(opts, GIT_APPLY_OPTIONS_VERSION));
     opts.ref.flags = flags;
 
-    NativeCallable<Int Function(Pointer<DiffDelta>, Pointer<Void>)>? deltaCb;
-    NativeCallable<Int Function(Pointer<DiffHunk>, Pointer<Void>)>? hunkCb;
+    NativeCallable<ApplyDeltaCbfunction>? deltaCb;
+    NativeCallable<ApplyHunkCbfunction>? hunkCb;
     if (onDelta != null) {
-      deltaCb =
-          NativeCallable<
-            Int Function(Pointer<DiffDelta>, Pointer<Void>)
-          >.isolateLocal((Pointer<DiffDelta> delta, Pointer<Void> _) {
-            try {
-              return onDelta(_readDelta(delta));
-            } on Object {
-              return -1;
-            }
-          }, exceptionalReturn: -1);
+      deltaCb = NativeCallable<ApplyDeltaCbfunction>.isolateLocal((
+        Pointer<DiffDelta> delta,
+        Pointer<Void> _,
+      ) {
+        try {
+          return onDelta(_readDelta(delta));
+        } on Object {
+          return -1;
+        }
+      }, exceptionalReturn: -1);
       opts.ref.delta_cb = deltaCb.nativeFunction.cast();
     }
     if (onHunk != null) {
-      hunkCb =
-          NativeCallable<
-            Int Function(Pointer<DiffHunk>, Pointer<Void>)
-          >.isolateLocal((Pointer<DiffHunk> hunk, Pointer<Void> _) {
-            try {
-              return onHunk(_readHunk(hunk));
-            } on Object {
-              return -1;
-            }
-          }, exceptionalReturn: -1);
+      hunkCb = NativeCallable<ApplyHunkCbfunction>.isolateLocal((
+        Pointer<DiffHunk> hunk,
+        Pointer<Void> _,
+      ) {
+        try {
+          return onHunk(_readHunk(hunk));
+        } on Object {
+          return -1;
+        }
+      }, exceptionalReturn: -1);
       opts.ref.hunk_cb = hunkCb.nativeFunction.cast();
     }
     try {
