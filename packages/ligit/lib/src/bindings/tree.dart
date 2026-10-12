@@ -135,23 +135,20 @@ int treeWalk(
   int mode,
   int Function(String root, int entryHandle) callback,
 ) {
-  final cb =
-      NativeCallable<
-        Int Function(Pointer<Char>, Pointer<TreeEntry>, Pointer<Void>)
-      >.isolateLocal((
-        Pointer<Char> root,
-        Pointer<TreeEntry> entry,
-        Pointer<Void> _,
-      ) {
-        try {
-          return callback(
-            root == nullptr ? '' : root.cast<Utf8>().toDartString(),
-            entry.address,
-          );
-        } on Object {
-          return -1;
-        }
-      }, exceptionalReturn: -1);
+  final cb = NativeCallable<TreewalkCbfunction>.isolateLocal((
+    Pointer<Char> root,
+    Pointer<TreeEntry> entry,
+    Pointer<Void> _,
+  ) {
+    try {
+      return callback(
+        root == nullptr ? '' : root.cast<Utf8>().toDartString(),
+        entry.address,
+      );
+    } on Object {
+      return -1;
+    }
+  }, exceptionalReturn: -1);
   try {
     final code = git_tree_walk(
       _tree(handle),
@@ -261,16 +258,16 @@ void treebuilderRemove(int handle, String filename) {
 }
 
 void treebuilderFilter(int handle, int Function(int entryHandle) filter) {
-  final cb =
-      NativeCallable<
-        Int Function(Pointer<TreeEntry>, Pointer<Void>)
-      >.isolateLocal((Pointer<TreeEntry> entry, Pointer<Void> _) {
-        try {
-          return filter(entry.address);
-        } on Object {
-          return -1;
-        }
-      }, exceptionalReturn: -1);
+  final cb = NativeCallable<TreebuilderFilterCbfunction>.isolateLocal((
+    Pointer<TreeEntry> entry,
+    Pointer<Void> _,
+  ) {
+    try {
+      return filter(entry.address);
+    } on Object {
+      return -1;
+    }
+  }, exceptionalReturn: -1);
   try {
     checkCode(
       git_treebuilder_filter(

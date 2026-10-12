@@ -138,23 +138,20 @@ int attrForeach(
 }) {
   return using((arena) {
     final cPath = path.toNativeUtf8(allocator: arena).cast<Char>();
-    final cb =
-        NativeCallable<
-          Int Function(Pointer<Char>, Pointer<Char>, Pointer<Void>)
-        >.isolateLocal((
-          Pointer<Char> name,
-          Pointer<Char> value,
-          Pointer<Void> _,
-        ) {
-          try {
-            return callback(
-              name.cast<Utf8>().toDartString(),
-              value == nullptr ? null : value.cast<Utf8>().toDartString(),
-            );
-          } on Object {
-            return -1;
-          }
-        }, exceptionalReturn: -1);
+    final cb = NativeCallable<AttrForeachCbfunction>.isolateLocal((
+      Pointer<Char> name,
+      Pointer<Char> value,
+      Pointer<Void> _,
+    ) {
+      try {
+        return callback(
+          name.cast<Utf8>().toDartString(),
+          value == nullptr ? null : value.cast<Utf8>().toDartString(),
+        );
+      } on Object {
+        return -1;
+      }
+    }, exceptionalReturn: -1);
     try {
       final code = git_attr_foreach(
         _repo(repoHandle),
@@ -188,23 +185,20 @@ int attrForeachExt(
         opts.ref.attr_commit_id.id[i] = commitId[i];
       }
     }
-    final cb =
-        NativeCallable<
-          Int Function(Pointer<Char>, Pointer<Char>, Pointer<Void>)
-        >.isolateLocal((
-          Pointer<Char> name,
-          Pointer<Char> value,
-          Pointer<Void> _,
-        ) {
-          try {
-            return callback(
-              name.cast<Utf8>().toDartString(),
-              value == nullptr ? null : value.cast<Utf8>().toDartString(),
-            );
-          } on Object {
-            return -1;
-          }
-        }, exceptionalReturn: -1);
+    final cb = NativeCallable<AttrForeachCbfunction>.isolateLocal((
+      Pointer<Char> name,
+      Pointer<Char> value,
+      Pointer<Void> _,
+    ) {
+      try {
+        return callback(
+          name.cast<Utf8>().toDartString(),
+          value == nullptr ? null : value.cast<Utf8>().toDartString(),
+        );
+      } on Object {
+        return -1;
+      }
+    }, exceptionalReturn: -1);
     try {
       final code = git_attr_foreach_ext(
         _repo(repoHandle),

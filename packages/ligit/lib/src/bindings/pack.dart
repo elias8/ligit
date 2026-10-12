@@ -106,21 +106,22 @@ String packbuilderName(int handle) {
 
 void packbuilderForeach(int handle, int Function(Uint8List buffer) onObject) {
   using((arena) {
-    final cb =
-        NativeCallable<
-          Int Function(Pointer<Void>, Size, Pointer<Void>)
-        >.isolateLocal((Pointer<Void> buf, int size, Pointer<Void> _) {
-          try {
-            final data = Uint8List(size);
-            final src = buf.cast<Uint8>();
-            for (var i = 0; i < size; i++) {
-              data[i] = src[i];
-            }
-            return onObject(data);
-          } on Object {
-            return -1;
-          }
-        }, exceptionalReturn: -1);
+    final cb = NativeCallable<PackbuilderForeachCbfunction>.isolateLocal((
+      Pointer<Void> buf,
+      int size,
+      Pointer<Void> _,
+    ) {
+      try {
+        final data = Uint8List(size);
+        final src = buf.cast<Uint8>();
+        for (var i = 0; i < size; i++) {
+          data[i] = src[i];
+        }
+        return onObject(data);
+      } on Object {
+        return -1;
+      }
+    }, exceptionalReturn: -1);
     try {
       checkCode(
         git_packbuilder_foreach(_pb(handle), cb.nativeFunction.cast(), nullptr),
@@ -149,16 +150,18 @@ void Function()? packbuilderSetCallbacks(
     );
     return null;
   }
-  final cb =
-      NativeCallable<
-        Int Function(Int, Uint32, Uint32, Pointer<Void>)
-      >.isolateLocal((int stage, int current, int total, Pointer<Void> _) {
-        try {
-          return callback(stage, current, total);
-        } on Object {
-          return -1;
-        }
-      }, exceptionalReturn: -1);
+  final cb = NativeCallable<PackbuilderProgressfunction>.isolateLocal((
+    int stage,
+    int current,
+    int total,
+    Pointer<Void> _,
+  ) {
+    try {
+      return callback(stage, current, total);
+    } on Object {
+      return -1;
+    }
+  }, exceptionalReturn: -1);
   checkCode(
     git_packbuilder_set_callbacks(
       _pb(handle),

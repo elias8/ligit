@@ -34,10 +34,7 @@ void submoduleFree(int handle) => git_submodule_free(_submodule(handle));
 List<String> submoduleForeach(int repoHandle) {
   return using((arena) {
     final names = <String>[];
-    late NativeCallable<
-      Int Function(Pointer<Submodule>, Pointer<Char>, Pointer<Void>)
-    >
-    cb;
+    late NativeCallable<SubmoduleCbfunction> cb;
     cb = NativeCallable.isolateLocal((
       Pointer<Submodule> _,
       Pointer<Char> name,

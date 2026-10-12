@@ -145,30 +145,22 @@ void patchPrint(
   int Function(DiffDeltaRecord delta, DiffHunkRecord? hunk, DiffLineRecord line)
   onLine,
 ) {
-  final cb =
-      NativeCallable<
-        Int Function(
-          Pointer<DiffDelta>,
-          Pointer<DiffHunk>,
-          Pointer<DiffLine>,
-          Pointer<Void>,
-        )
-      >.isolateLocal((
-        Pointer<DiffDelta> delta,
-        Pointer<DiffHunk> hunk,
-        Pointer<DiffLine> line,
-        Pointer<Void> _,
-      ) {
-        try {
-          return onLine(
-            _readDelta(delta),
-            hunk == nullptr ? null : _readHunk(hunk),
-            _readLine(line),
-          );
-        } on Object {
-          return -1;
-        }
-      }, exceptionalReturn: -1);
+  final cb = NativeCallable<DiffLineCbfunction>.isolateLocal((
+    Pointer<DiffDelta> delta,
+    Pointer<DiffHunk> hunk,
+    Pointer<DiffLine> line,
+    Pointer<Void> _,
+  ) {
+    try {
+      return onLine(
+        _readDelta(delta),
+        hunk == nullptr ? null : _readHunk(hunk),
+        _readLine(line),
+      );
+    } on Object {
+      return -1;
+    }
+  }, exceptionalReturn: -1);
   try {
     checkCode(
       git_patch_print(_patch(handle), cb.nativeFunction.cast(), nullptr.cast()),

@@ -405,8 +405,7 @@ void _runMatched(
     arr.ref.strings = ptrs;
     arr.ref.count = pathSpecs.length;
 
-    NativeCallable<Int Function(Pointer<Char>, Pointer<Char>, Pointer<Void>)>?
-    callable;
+    NativeCallable<IndexMatchedPathCbfunction>? callable;
     var cb = nullptr
         .cast<
           NativeFunction<
@@ -429,10 +428,10 @@ void _runMatched(
         }
       }
 
-      callable =
-          NativeCallable<
-            Int Function(Pointer<Char>, Pointer<Char>, Pointer<Void>)
-          >.isolateLocal(trampoline, exceptionalReturn: -1);
+      callable = NativeCallable<IndexMatchedPathCbfunction>.isolateLocal(
+        trampoline,
+        exceptionalReturn: -1,
+      );
       cb = callable.nativeFunction;
     }
     try {

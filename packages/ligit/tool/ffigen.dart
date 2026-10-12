@@ -11,9 +11,6 @@ library;
 import 'dart:io';
 
 import 'package:ffigen/ffigen.dart';
-import 'package:ffigen/src/code_generator.dart';
-import 'package:ffigen/src/context.dart';
-import 'package:ffigen/src/header_parser.dart' as ffigen;
 import 'package:ligit/src/hook/libgit2_source.dart';
 import 'package:logging/logging.dart';
 
@@ -45,11 +42,9 @@ Future<void> main() async {
   stdout.writeln('Using libgit2 headers from $include');
 
   final compilerOpts = ['-I$include', ..._sdkIncludeOpts()];
-  final renames = _extractEnumMemberRenames(compilerOpts);
 
   try {
-    _createGenerator(
-      enumMemberRenames: renames,
+    await _createGenerator(
       compilerOpts: compilerOpts,
     ).generate(logger: Logger.root);
   } on Object catch (e, s) {
@@ -109,42 +104,9 @@ List<String> _sdkIncludeOpts() {
   return ['-isysroot', sdk];
 }
 
-Map<String, Map<String, String>> _extractEnumMemberRenames(
-  List<String> compilerOpts,
-) {
-  final generator = FfiGenerator(
-    output: Output(dartFile: Uri.file(_nativeOutput)),
-    headers: _headers(compilerOpts: compilerOpts),
-    enums: const Enums(include: _includeType),
-  );
-
-  final library = ffigen.parse(Context(Logger.root, generator));
-  final renames = <String, Map<String, String>>{};
-
-  for (final binding in library.bindings) {
-    if (binding is! EnumClass) continue;
-
-    final members = [
-      for (final c in binding.enumConstants) c.originalName ?? c.name,
-    ];
-    final prefix = longestCommonPrefix(members);
-
-    renames[binding.originalName] = {
-      for (final m in members)
-        m: toCamelCase(
-          prefix.isNotEmpty && m.startsWith(prefix)
-              ? m.substring(prefix.length)
-              : m,
-        ),
-    };
-  }
-
-  return renames;
-}
-
-Headers _headers({required List<String> compilerOpts}) {
+Input _headers({required List<String> compilerOpts}) {
   final include = compilerOpts.first.substring(2);
-  return Headers(
+  return Input(
     entryPoints: [Uri.file('$include/git2.h')],
     include: (header) {
       final path = header.path;
@@ -154,44 +116,71 @@ Headers _headers({required List<String> compilerOpts}) {
   );
 }
 
-FfiGenerator _createGenerator({
-  required Map<String, Map<String, String>>? enumMemberRenames,
-  required List<String> compilerOpts,
-}) => FfiGenerator(
-  output: Output(
-    dartFile: Uri.file(_nativeOutput),
-    preamble: '// ignore_for_file: unused_field',
-    style: const NativeExternalBindings(assetId: 'package:ligit/ligit.dart'),
-  ),
-  headers: _headers(compilerOpts: compilerOpts),
-  functions: Functions(include: (d) => d.originalName.startsWith('git_')),
-  unions: const Unions(include: _includeType, rename: _stripPrefix),
-  structs: const Structs(include: _includeType, rename: _stripPrefix),
-  typedefs: const Typedefs(include: _includeType, rename: _stripPrefix),
-  enums: Enums(
-    include: _includeType,
-    rename: _stripPrefixAndTypeSuffix,
-    renameMember: enumMemberRenames != null
-        ? Declarations.renameMemberWithMap(enumMemberRenames)
-        : (d, m) => m,
-  ),
-  globals: const Globals(include: _includeType, rename: _stripPrefix),
-  macros: const Macros(include: _includeType),
-);
+FfiGenerator _createGenerator({required List<String> compilerOpts}) =>
+    FfiGenerator(
+      output: Output(
+        dart: DartOutput(path: Uri.file(_nativeOutput)),
+        preamble: '// ignore_for_file: unused_field',
+        style: const NativeExternalBindings(
+          assetId: 'package:ligit/ligit.dart',
+        ),
+      ),
+      input: _headers(compilerOpts: compilerOpts),
+      visitors: [
+        Visitor(
+          func: (node) =>
+              node.isIncluded = node.originalName.startsWith('git_'),
+          struct: (node) {
+            node.isIncluded = _includeType(node);
+            node.name = _stripPrefix(node);
+          },
+          union: (node) {
+            node.isIncluded = _includeType(node);
+            node.name = _stripPrefix(node);
+          },
+          typealias: (node) {
+            node.isIncluded = _includeType(node)
+                ? TypealiasInclude.always
+                : TypealiasInclude.ifUsed;
+            node.name = _stripPrefix(node);
+          },
+          enumClass: (node) {
+            node.isIncluded = _includeType(node);
+            node.name = _stripPrefixAndTypeSuffix(node);
+            final members = node.constants.map((c) => c.originalName).toList();
+            final prefix = longestCommonPrefix(members);
+            for (final member in node.constants) {
+              final name = member.originalName;
+              member.name = toCamelCase(
+                prefix.isNotEmpty && name.startsWith(prefix)
+                    ? name.substring(prefix.length)
+                    : name,
+              );
+            }
+          },
+          global: (node) {
+            node.isIncluded = _includeType(node);
+            node.name = _stripPrefix(node);
+          },
+          macroConstant: (node) => node.isIncluded = _includeType(node),
+          unnamedEnumConstant: (node) => node.isIncluded = _includeType(node),
+        ),
+      ],
+    );
 
-bool _includeType(Declaration d) =>
+bool _includeType(NamedNode d) =>
     d.originalName.startsWith('git_') ||
     d.originalName.startsWith('GIT_') ||
     d.originalName.startsWith('LIBGIT2_');
 
-String _stripPrefix(Declaration d) {
+String _stripPrefix(NamedNode d) {
   final n = d.originalName;
   if (n.startsWith('git_')) return _toUpperCamel(n.substring(4));
   if (n.startsWith('GIT_')) return n.substring(4);
   return n;
 }
 
-String _stripPrefixAndTypeSuffix(Declaration d) {
+String _stripPrefixAndTypeSuffix(NamedNode d) {
   var n = d.originalName;
   if (n.endsWith('_t') && !_enumKeepsTypeSuffix.contains(n)) {
     n = n.substring(0, n.length - 2);

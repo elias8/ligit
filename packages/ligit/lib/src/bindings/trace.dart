@@ -22,10 +22,7 @@ void traceSet(
   }
 
   _currentHandler = onTrace;
-  final callable =
-      NativeCallable<Void Function(UnsignedInt, Pointer<Char>)>.listener(
-        _dispatch,
-      );
+  final callable = NativeCallable<TraceCbfunction>.listener(_dispatch);
   _currentCallback = callable;
   checkCode(git_trace_set(level, callable.nativeFunction));
 }
@@ -37,5 +34,5 @@ void _dispatch(int level, Pointer<Char> msg) {
   handler(TraceLevel.fromValue(level), message);
 }
 
-NativeCallable<Void Function(UnsignedInt, Pointer<Char>)>? _currentCallback;
+NativeCallable<TraceCbfunction>? _currentCallback;
 void Function(TraceLevel level, String message)? _currentHandler;

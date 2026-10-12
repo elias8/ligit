@@ -142,11 +142,14 @@ int statusForeachExt(
   });
 }
 
-NativeCallable<Int Function(Pointer<Char>, UnsignedInt, Pointer<Void>)>
-_statusCallable(int Function(String path, int statusFlags) callback) {
-  return NativeCallable<
-    Int Function(Pointer<Char>, UnsignedInt, Pointer<Void>)
-  >.isolateLocal((Pointer<Char> path, int flags, Pointer<Void> _) {
+NativeCallable<StatusCbfunction> _statusCallable(
+  int Function(String path, int statusFlags) callback,
+) {
+  return NativeCallable<StatusCbfunction>.isolateLocal((
+    Pointer<Char> path,
+    int flags,
+    Pointer<Void> _,
+  ) {
     try {
       return callback(path.cast<Utf8>().toDartString(), flags);
     } on Object {

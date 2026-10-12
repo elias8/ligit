@@ -227,20 +227,17 @@ int noteForeach(
     final cRef = notesRef == null
         ? nullptr.cast<Char>()
         : notesRef.toNativeUtf8(allocator: arena).cast<Char>();
-    final cb =
-        NativeCallable<
-          Int Function(Pointer<Oid>, Pointer<Oid>, Pointer<Void>)
-        >.isolateLocal((
-          Pointer<Oid> blob,
-          Pointer<Oid> annotated,
-          Pointer<Void> _,
-        ) {
-          try {
-            return callback(_oidBytes(blob), _oidBytes(annotated));
-          } on Object {
-            return -1;
-          }
-        }, exceptionalReturn: -1);
+    final cb = NativeCallable<NoteForeachCbfunction>.isolateLocal((
+      Pointer<Oid> blob,
+      Pointer<Oid> annotated,
+      Pointer<Void> _,
+    ) {
+      try {
+        return callback(_oidBytes(blob), _oidBytes(annotated));
+      } on Object {
+        return -1;
+      }
+    }, exceptionalReturn: -1);
     try {
       final code = git_note_foreach(
         _repo(repoHandle),
